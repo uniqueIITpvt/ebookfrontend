@@ -36,7 +36,9 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+import { BACKEND_URL } from '@/config/backend-url.config';
+
+const API_URL = `${BACKEND_URL}/api/v1`;
 
 interface Setting {
   _id: string;

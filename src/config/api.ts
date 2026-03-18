@@ -3,7 +3,9 @@
  * Centralized API configuration for the frontend
  */
 
- const RAW_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { BACKEND_URL } from './backend-url.config';
+
+ const RAW_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || BACKEND_URL;
  const NORMALIZED_PUBLIC_API_URL = RAW_PUBLIC_API_URL.replace(/\/+$/, '');
  const NORMALIZED_PUBLIC_API_ORIGIN = NORMALIZED_PUBLIC_API_URL.replace(/\/api\/v\d+$/, '');
 

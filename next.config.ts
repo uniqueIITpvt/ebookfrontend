@@ -1,5 +1,14 @@
 import type { NextConfig } from 'next';
 
+// Backend URL configuration
+// TOGGLE: Set to 'true' for local backend, 'false' for deployed backend
+const USE_LOCAL_BACKEND = false;
+const BACKEND_URL = USE_LOCAL_BACKEND 
+  ? 'http://localhost:5000' 
+  : (process.env.NEXT_PUBLIC_API_URL || 'https://ebookbackend.vercel.app');
+
+console.log(`[Next Config] Using ${USE_LOCAL_BACKEND ? 'LOCAL' : 'DEPLOYED'} backend: ${BACKEND_URL}`);
+
 const nextConfig: NextConfig = {
   images: {
     unoptimized: process.env.NODE_ENV === 'development',
@@ -89,18 +98,10 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const localBackend = 'http://localhost:5000';
-    const remoteBackend =
-      process.env.NEXT_PUBLIC_API_URL ||
-      'https://dr-sayyad-m-quadri-backend.vercel.app';
-
-    const backendOrigin =
-      process.env.NODE_ENV === 'development' ? localBackend : remoteBackend;
-
     return [
       {
         source: '/api/v1/:path*',
-        destination: `${backendOrigin}/api/v1/:path*`,
+        destination: `${BACKEND_URL}/api/v1/:path*`,
       },
     ];
   },
