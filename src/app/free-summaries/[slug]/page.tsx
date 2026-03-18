@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/primitives/Button';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
-export default function FreeSummaryDetailPage({ params }: { params: { slug: string } }) {
+export default function FreeSummaryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const router = useRouter();
   const [summary, setSummary] = useState<FreeSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function FreeSummaryDetailPage({ params }: { params: { slug: stri
         const data = await response.json();
         
         if (data.success && data.data) {
-          const foundSummary = data.data.find((s: FreeSummary) => s.slug === params.slug);
+          const foundSummary = data.data.find((s: FreeSummary) => s.slug === slug);
           setSummary(foundSummary || null);
         }
       } catch (err) {
@@ -40,7 +41,7 @@ export default function FreeSummaryDetailPage({ params }: { params: { slug: stri
     };
 
     fetchSummary();
-  }, [params.slug]);
+  }, [slug]);
 
   if (isLoading) {
     return (

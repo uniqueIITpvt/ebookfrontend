@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/primitives/Button';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
-export default function TrendingBookDetailPage({ params }: { params: { slug: string } }) {
+export default function TrendingBookDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const router = useRouter();
   const [book, setBook] = useState<TrendingBook | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function TrendingBookDetailPage({ params }: { params: { slug: str
         const data = await response.json();
         
         if (data.success && data.data) {
-          const foundBook = data.data.find((b: TrendingBook) => b.slug === params.slug);
+          const foundBook = data.data.find((b: TrendingBook) => b.slug === slug);
           setBook(foundBook || null);
         }
       } catch (err) {
@@ -40,7 +41,7 @@ export default function TrendingBookDetailPage({ params }: { params: { slug: str
     };
 
     fetchBook();
-  }, [params.slug]);
+  }, [slug]);
 
   if (isLoading) {
     return (

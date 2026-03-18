@@ -321,7 +321,7 @@ export default function BooksGridMobile({ items, className = '', onAudiobookSele
                     {item.title}
                   </h3>
                   <p className='text-xs text-white/80 mb-2'>
-                    By {item.author} • {item.type === 'Books' ? `${item.pages} pages` : item.duration}
+                    By {item.author} • {item.duration}
                   </p>
                   <Button variant="secondary" size="xs" fullWidth>
                     Buy Now
