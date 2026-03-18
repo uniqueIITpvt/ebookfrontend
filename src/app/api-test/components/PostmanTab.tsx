@@ -59,10 +59,12 @@ interface PostmanTabProps {
   loading: string | null;
 }
 
+import { BACKEND_URL } from '@/config/backend-url.config';
+
 export default function PostmanTab({ loading }: PostmanTabProps) {
   // Request Configuration
   const [method, setMethod] = useState('GET');
-  const [url, setUrl] = useState('http://localhost:5000/api/v1/books');
+  const [url, setUrl] = useState(`${BACKEND_URL}/api/v1/books`);
   const [headers, setHeaders] = useState<Header[]>([
     { key: 'Content-Type', value: 'application/json', enabled: true },
     { key: 'Accept', value: 'application/json', enabled: true },
@@ -88,14 +90,14 @@ export default function PostmanTab({ loading }: PostmanTabProps) {
 
   // Common API Endpoints for quick access
   const commonEndpoints = [
-    { name: 'Health Check', method: 'GET', url: 'http://localhost:5000/health' },
-    { name: 'API Info', method: 'GET', url: 'http://localhost:5000/' },
-    { name: 'All Books', method: 'GET', url: 'http://localhost:5000/api/v1/books' },
-    { name: 'Featured Books', method: 'GET', url: 'http://localhost:5000/api/v1/books/featured' },
-    { name: 'Create Book', method: 'POST', url: 'http://localhost:5000/api/v1/books' },
-    { name: 'Search Books', method: 'GET', url: 'http://localhost:5000/api/v1/books/search?q=anxiety' },
-    { name: 'Book Categories', method: 'GET', url: 'http://localhost:5000/api/v1/books/categories' },
-    { name: 'Book Stats', method: 'GET', url: 'http://localhost:5000/api/v1/books/stats' }
+    { name: 'Health Check', method: 'GET', url: `${BACKEND_URL}/health` },
+    { name: 'API Info', method: 'GET', url: `${BACKEND_URL}/` },
+    { name: 'All Books', method: 'GET', url: `${BACKEND_URL}/api/v1/books` },
+    { name: 'Featured Books', method: 'GET', url: `${BACKEND_URL}/api/v1/books/featured` },
+    { name: 'Create Book', method: 'POST', url: `${BACKEND_URL}/api/v1/books` },
+    { name: 'Search Books', method: 'GET', url: `${BACKEND_URL}/api/v1/books/search?q=anxiety` },
+    { name: 'Book Categories', method: 'GET', url: `${BACKEND_URL}/api/v1/books/categories` },
+    { name: 'Book Stats', method: 'GET', url: `${BACKEND_URL}/api/v1/books/stats` }
   ];
 
   // Header Management
