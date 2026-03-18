@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/primitives/Button';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
-export default function PremiumSummaryDetailPage({ params }: { params: { slug: string } }) {
+export default function PremiumSummaryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const router = useRouter();
   const [summary, setSummary] = useState<PremiumSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function PremiumSummaryDetailPage({ params }: { params: { slug: s
         const data = await response.json();
         
         if (data.success && data.data) {
-          const foundSummary = data.data.find((s: PremiumSummary) => s.slug === params.slug);
+          const foundSummary = data.data.find((s: PremiumSummary) => s.slug === slug);
           setSummary(foundSummary || null);
         }
       } catch (err) {
@@ -40,7 +41,7 @@ export default function PremiumSummaryDetailPage({ params }: { params: { slug: s
     };
 
     fetchSummary();
-  }, [params.slug]);
+  }, [slug]);
 
   if (isLoading) {
     return (
@@ -150,7 +151,7 @@ export default function PremiumSummaryDetailPage({ params }: { params: { slug: s
                 </svg>
                 <div>
                   <div className="text-sm text-gray-500">Status</div>
-                  <div className="font-semibold capitalize">{summary.status}</div>
+                  <div className="font-semibold capitalize">{summary.isActive ? 'Active' : 'Inactive'}</div>
                 </div>
               </div>
             </div>

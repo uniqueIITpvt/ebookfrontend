@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import BooksHero from '@/components/ui/books/BooksHero';
@@ -12,6 +12,20 @@ import { API_CONFIG } from '@/config/api';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const API_URL = API_CONFIG.API_BASE_URL;
+
+// Loading fallback for Suspense
+const BooksPageLoading = () => (
+  <div className='min-h-screen bg-gray-50 pt-20'>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 interface Book {
   id: string;
@@ -424,4 +438,10 @@ const BooksPage = () => {
   );
 };
 
-export default BooksPage;
+const BooksPageWrapper = () => (
+  <Suspense fallback={<BooksPageLoading />}>
+    <BooksPage />
+  </Suspense>
+);
+
+export default BooksPageWrapper;

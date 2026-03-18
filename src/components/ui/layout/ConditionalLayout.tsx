@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -8,6 +9,11 @@ import AutomaticChatEmbed from '../primitives/AutomaticChatEmbed';
 interface ConditionalLayoutProps {
   children: React.ReactNode;
 }
+
+// Simple loading fallback for Navbar
+const NavbarLoading = () => (
+  <div className="h-16 bg-white border-b border-slate-200" />
+);
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
@@ -21,7 +27,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   // For regular routes, show the full layout
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<NavbarLoading />}>
+        <Navbar />
+      </Suspense>
       <main>{children}</main>
       <Footer />
       <AutomaticChatEmbed />

@@ -150,12 +150,12 @@ export default function NotFound() {
                   >
                     Contact Support
                   </Link>
-                  <a
+                  <Link
                     href='/books'
                     className='inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors text-xs sm:text-sm'
                   >
                     Browse Books
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
