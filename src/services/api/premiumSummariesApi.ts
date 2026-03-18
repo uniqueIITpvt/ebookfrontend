@@ -47,6 +47,13 @@ export interface PremiumSummaryFormData {
 /**
  * Premium Summaries API Service
  */
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 class PremiumSummariesApiService {
   private getAuthHeaders(): HeadersInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -65,7 +72,7 @@ class PremiumSummariesApiService {
     category?: string;
     featured?: boolean;
     search?: string;
-  }): Promise<{ data: PremiumSummary[]; pagination: any }> {
+  }): Promise<{ data: PremiumSummary[]; pagination: Pagination }> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());

@@ -47,6 +47,13 @@ export interface TrendingBookFormData {
 /**
  * Trending Books API Service
  */
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 class TrendingBooksApiService {
   private getAuthHeaders(): HeadersInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -66,7 +73,7 @@ class TrendingBooksApiService {
     featured?: boolean;
     search?: string;
     sortBy?: string;
-  }): Promise<{ data: TrendingBook[]; pagination: any }> {
+  }): Promise<{ data: TrendingBook[]; pagination: Pagination }> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());

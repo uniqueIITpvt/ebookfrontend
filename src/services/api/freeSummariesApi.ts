@@ -43,6 +43,13 @@ export interface FreeSummaryFormData {
 /**
  * Free Summaries API Service
  */
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 class FreeSummariesApiService {
   private getAuthHeaders(): HeadersInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -61,7 +68,7 @@ class FreeSummariesApiService {
     category?: string;
     featured?: boolean;
     search?: string;
-  }): Promise<{ data: FreeSummary[]; pagination: any }> {
+  }): Promise<{ data: FreeSummary[]; pagination: Pagination }> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
