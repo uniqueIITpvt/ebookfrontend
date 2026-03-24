@@ -789,7 +789,7 @@ export default function BooksPage() {
         status: selectedBook.status || 'draft',
         tags: selectedBook.tags || [],
         publishDate: selectedBook.publishDate || new Date().toISOString().split('T')[0],
-        isbn: selectedBook.isbn?.trim(),
+        isbn: selectedBook.isbn?.trim() || undefined,
         pages: selectedBook.pages ? Number(selectedBook.pages) : undefined,
         rating: selectedBook.rating,
         reviews: selectedBook.reviews,

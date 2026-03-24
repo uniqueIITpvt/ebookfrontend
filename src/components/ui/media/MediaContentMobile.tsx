@@ -37,30 +37,7 @@ const blobStyles = `
   }
 `;
 
-// Type definitions
-interface Book {
-  id: number;
-  title: string;
-  subtitle: string;
-  author: string;
-  description: string;
-  category: string;
-  type: 'Books' | 'Audiobook';
-  price: string;
-  originalPrice: string;
-  rating: number;
-  reviews: number;
-  pages?: number;
-  duration?: string;
-  narrator?: string;
-  publishDate: string;
-  isbn: string;
-  format: string[];
-  image: string;
-  featured: boolean;
-  bestseller: boolean;
-  tags: string[];
-}
+// Local Book interface removed - using type from @/services/api/booksApi
 
 export default function MediaContentMobile() {
   const [currentBookPage, setCurrentBookPage] = useState(0);
@@ -462,7 +439,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingFreeSummaries ? [] : getFreeSummariesPageItems()).map((summary, index) => (
               <div
-                key={summary._id}
+                key={(summary as any)._id || (summary as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -528,7 +505,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {summary.author} • {summary.pages ? `${summary.pages} pages` : 'Free Summary'}
                     </p>
-                    <Link href={`/free-summaries/${summary.slug}`}>
+                    <Link href={`/free-summaries/${(summary as any).slug || (summary as any).id || (summary as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>
@@ -592,7 +569,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingTrendingBooks ? [] : getTrendingBooksPageItems()).map((book, index) => (
               <div
-                key={book._id}
+                key={(book as any)._id || (book as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -658,7 +635,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {book.author} • {book.pages ? `${book.pages} pages` : 'Trending'}
                     </p>
-                    <Link href={`/trending-books/${book.slug}`}>
+                    <Link href={`/trending-books/${(book as any).slug || (book as any).id || (book as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>
@@ -722,7 +699,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingPremiumSummaries ? [] : getPremiumSummariesPageItems()).map((summary, index) => (
               <div
-                key={summary._id}
+                key={(summary as any)._id || (summary as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -788,7 +765,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {summary.author} • {summary.pages ? `${summary.pages} pages` : 'Premium Summary'}
                     </p>
-                    <Link href={`/premium-summaries/${summary.slug}`}>
+                    <Link href={`/premium-summaries/${(summary as any).slug || (summary as any).id || (summary as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>
