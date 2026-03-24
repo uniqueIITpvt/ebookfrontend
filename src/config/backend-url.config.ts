@@ -12,7 +12,7 @@
 // ==========================================
 // TOGGLE THIS VALUE TO SWITCH BACKENDS
 // ==========================================
-export const USE_LOCAL_BACKEND = false; // Change to true for local, false for deployed
+export const USE_LOCAL_BACKEND = true; // Change to true for local, false for deployed
 
 // Backend URLs
 const LOCAL_BACKEND_URL = 'http://localhost:5000';

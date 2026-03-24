@@ -29,7 +29,7 @@ export function CTASection() {
           Ready to Transform Your Life?
         </h2>
         <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
-          Take the first step towards better mental health with personalized care.
+          Take the first step towards better knowledge with curated reads.
         </p>
         
         {/* Using new Button component instead of inline button classes */}
@@ -181,7 +181,7 @@ export function CardActions() {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
       <h3 className="text-xl font-semibold text-slate-900 mb-4">
-        Mental Health Resources
+        Learning Resources
       </h3>
       <p className="text-slate-600 mb-6">
         Access our comprehensive collection of therapeutic materials and guides.

@@ -12,11 +12,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
-import { freeSummariesApi, type FreeSummary } from '@/services/api/freeSummariesApi';
-import { trendingBooksApi, type TrendingBook } from '@/services/api/trendingBooksApi';
-import { premiumSummariesApi, type PremiumSummary } from '@/services/api/premiumSummariesApi';
-// import { ContentLoader } from '../primitives/Loader';
-// import LoadingAnimation from '../LoadingAnimation';
+import { booksApi, type Book } from '@/services/api/booksApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -41,30 +37,7 @@ const blobStyles = `
   }
 `;
 
-// Type definitions
-interface Book {
-  id: number;
-  title: string;
-  subtitle: string;
-  author: string;
-  description: string;
-  category: string;
-  type: 'Books' | 'Audiobook';
-  price: string;
-  originalPrice: string;
-  rating: number;
-  reviews: number;
-  pages?: number;
-  duration?: string;
-  narrator?: string;
-  publishDate: string;
-  isbn: string;
-  format: string[];
-  image: string;
-  featured: boolean;
-  bestseller: boolean;
-  tags: string[];
-}
+// Local Book interface removed - using type from @/services/api/booksApi
 
 export default function MediaContentMobile() {
   const [currentBookPage, setCurrentBookPage] = useState(0);
@@ -74,9 +47,9 @@ export default function MediaContentMobile() {
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
-  const [freeSummaries, setFreeSummaries] = useState<FreeSummary[]>([]);
-  const [trendingBooks, setTrendingBooks] = useState<TrendingBook[]>([]);
-  const [premiumSummaries, setPremiumSummaries] = useState<PremiumSummary[]>([]);
+  const [freeSummaries, setFreeSummaries] = useState<Book[]>([]);
+  const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+  const [premiumSummaries, setPremiumSummaries] = useState<Book[]>([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingFreeSummaries, setIsLoadingFreeSummaries] = useState(true);
   const [isLoadingTrendingBooks, setIsLoadingTrendingBooks] = useState(true);
@@ -124,9 +97,10 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch free summaries using unified Books API
         setIsLoadingFreeSummaries(true);
-        const data = await freeSummariesApi.getFeaturedFreeSummaries(6);
-        setFreeSummaries(data);
+        const response = await booksApi.getBooksByComponentType('free-summaries', 6);
+        setFreeSummaries(response.data);
       } catch (err) {
         console.error('Error fetching free summaries:', err);
         setFreeSummaries([]);
@@ -135,9 +109,10 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch trending books using unified Books API
         setIsLoadingTrendingBooks(true);
-        const data = await trendingBooksApi.getFeaturedTrendingBooks(6);
-        setTrendingBooks(data);
+        const response = await booksApi.getBooksByComponentType('trending-books', 6);
+        setTrendingBooks(response.data);
       } catch (err) {
         console.error('Error fetching trending books:', err);
         setTrendingBooks([]);
@@ -146,11 +121,13 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch premium summaries using unified Books API
         setIsLoadingPremiumSummaries(true);
-        const data = await premiumSummariesApi.getLatestPremiumSummaries(6);
-        setPremiumSummaries(data);
+        const response = await booksApi.getBooksByComponentType('premium-summaries', 6);
+        setPremiumSummaries(response.data);
       } catch (err) {
         console.error('Error fetching premium summaries:', err);
+        setPremiumSummaries([]);
       } finally {
         setIsLoadingPremiumSummaries(false);
       }
@@ -462,7 +439,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingFreeSummaries ? [] : getFreeSummariesPageItems()).map((summary, index) => (
               <div
-                key={summary._id}
+                key={(summary as any)._id || (summary as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -528,7 +505,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {summary.author} • {summary.pages ? `${summary.pages} pages` : 'Free Summary'}
                     </p>
-                    <Link href={`/free-summaries/${summary.slug}`}>
+                    <Link href={`/free-summaries/${(summary as any).slug || (summary as any).id || (summary as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>
@@ -592,7 +569,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingTrendingBooks ? [] : getTrendingBooksPageItems()).map((book, index) => (
               <div
-                key={book._id}
+                key={(book as any)._id || (book as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -658,7 +635,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {book.author} • {book.pages ? `${book.pages} pages` : 'Trending'}
                     </p>
-                    <Link href={`/trending-books/${book.slug}`}>
+                    <Link href={`/trending-books/${(book as any).slug || (book as any).id || (book as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>
@@ -722,7 +699,7 @@ export default function MediaContentMobile() {
           >
             {(isLoadingPremiumSummaries ? [] : getPremiumSummariesPageItems()).map((summary, index) => (
               <div
-                key={summary._id}
+                key={(summary as any)._id || (summary as any).id}
                 className='group relative w-full'
                 style={{
                   animationDelay: `${index * 100}ms`,
@@ -788,7 +765,7 @@ export default function MediaContentMobile() {
                     <p className='text-xs text-white/80 mb-2'>
                       By {summary.author} • {summary.pages ? `${summary.pages} pages` : 'Premium Summary'}
                     </p>
-                    <Link href={`/premium-summaries/${summary.slug}`}>
+                    <Link href={`/premium-summaries/${(summary as any).slug || (summary as any).id || (summary as any)._id}`}>
                       <Button variant="secondary" size="xs" fullWidth>
                         View Details
                       </Button>

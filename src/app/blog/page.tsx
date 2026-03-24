@@ -152,7 +152,7 @@ export default function BlogPage() {
               )}
             </h1>
             {/* <p className="text-xl sm:text-2xl text-slate-600 leading-relaxed mb-2">
-              Evidence-based articles on mental health, wellness, and medical practice 
+              Explore our collection of online e-books, audiobooks, and insightful blog posts
               from uniqueIIT Research Center
             </p> */}
           </div>

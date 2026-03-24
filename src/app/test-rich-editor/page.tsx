@@ -156,8 +156,8 @@ export default function TestRichEditorPage() {
               fullWidth 
               onClick={() => {
                 const sampleContent = `
-                  <h2>Sample Medical Blog Post</h2>
-                  <p>This is a <strong>sample medical blog post</strong> about <em>cardiovascular health</em>.</p>
+                  <h2>Sample Blog Post</h2>
+                  <p>This is a <strong>sample blog post</strong> about <em>reading habits</em>.</p>
                   
                   <h3>Key Points:</h3>
                   <ul>

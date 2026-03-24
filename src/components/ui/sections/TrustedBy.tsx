@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-const healthcareOrganizations = [
+const partnerOrganizations = [
   {
     name: 'Research Communities',
     logo: 'https://logo.clearbit.com/researchgate.net',

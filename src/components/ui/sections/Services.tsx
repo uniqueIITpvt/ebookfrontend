@@ -31,9 +31,7 @@ export default function Services() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        setIsLoading(true);
-        const response = await fetch(`${API_URL}/treatments?category=Mental Health&limit=8`);
-        
+        const response = await fetch(`${API_URL}/categories?limit=8`);
         if (!response.ok) {
           throw new Error('Failed to fetch items');
         }
@@ -136,7 +134,7 @@ export default function Services() {
             services.map((service, index) => (
             <Link
               key={service._id}
-              href={`/treatments/${service.slug}`}
+              href={`/categories/${service.slug}`}
               className={`group relative rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 cursor-pointer block ${
                 isVisible
                   ? 'animate-in slide-in-from-bottom duration-1000'

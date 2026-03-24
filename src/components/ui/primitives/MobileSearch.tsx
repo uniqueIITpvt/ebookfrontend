@@ -45,11 +45,11 @@ const searchData: SearchResult[] = [
   {
     id: 'book-2',
     title: 'Mind Matters: Mental Wellness',
-    description: 'Essential guide to maintaining mental health and building resilience in daily life.',
+    description: 'Essential guide to maintaining productivity and building resilience in daily life.',
     type: 'book',
     image: '/books/Navy and Pink Illustrated Mind Matters Book Cover.jpg',
     author: 'UniqueIIT Research Center',
-    category: 'Mental Health',
+    category: 'Self-Help',
     url: '/books/mind-matters',
   },
   {
@@ -69,7 +69,7 @@ const searchData: SearchResult[] = [
     title: 'Anxiety Disorders',
     description: 'Comprehensive resources about anxiety disorders, symptoms, and treatment options.',
     type: 'topic',
-    category: 'Mental Health',
+    category: 'Self-Help',
     url: '/treatment/anxiety',
   },
   {

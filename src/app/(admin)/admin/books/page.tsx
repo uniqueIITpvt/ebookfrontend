@@ -64,6 +64,9 @@ import {
 } from '@mui/icons-material';
 import { booksApi, type Book, type BookPayload, type BookFile } from '@/services/api/booksApi';
 import { categoriesApi, type Category } from '@/services/api/categoriesApi';
+import { bookTypesApi, type BookType } from '@/services/api/bookTypesApi';
+import { bookHubsApi, type BookHub } from '@/services/api/bookHubsApi';
+import { bookStatusesApi, type BookStatus } from '@/services/api/bookStatusesApi';
 import { ImageIcon } from 'lucide-react';
 
 // Form data interface for admin operations
@@ -81,6 +84,7 @@ interface BookFormData extends Omit<BookPayload, 'price' | 'originalPrice' | 'ta
   slug?: string;
   // Override fields to make them optional for form
   tags?: string[]; // Optional in form, will default to empty array
+  componentType?: 'none' | 'free-summaries' | 'trending-books' | 'premium-summaries';
 }
 
 interface ValidationErrors {
@@ -135,8 +139,17 @@ export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [bookTypes, setBookTypes] = useState<BookType[]>([]);
+  const [bookHubs, setBookHubs] = useState<BookHub[]>([]);
+  const [bookStatusesList, setBookStatusesList] = useState<BookStatus[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [bookTypeDialogOpen, setBookTypeDialogOpen] = useState(false);
+  const [bookHubDialogOpen, setBookHubDialogOpen] = useState(false);
+  const [bookStatusDialogOpen, setBookStatusDialogOpen] = useState(false);
   const [newCategoryData, setNewCategoryData] = useState({ name: '', description: '', color: '#1976d2' });
+  const [newBookTypeData, setNewBookTypeData] = useState({ name: '', description: '', color: '#1976d2' });
+  const [newBookHubData, setNewBookHubData] = useState({ name: '', value: '', description: '', color: '#9c27b0' });
+  const [newBookStatusData, setNewBookStatusData] = useState({ name: '', value: '', description: '', color: '#757575' });
   const [stats, setStats] = useState({
     total: 0,
     published: 0,
@@ -200,7 +213,7 @@ export default function BooksPage() {
     try {
       setLoading(true);
       
-    // Try to load categories first
+      // Try to load categories first
       try {
         const categoriesResponse = await categoriesApi.getActive();
         if (categoriesResponse.success && categoriesResponse.data && categoriesResponse.data.length > 0) {
@@ -241,6 +254,36 @@ export default function BooksPage() {
         setCategories(fallbackCategories);
       }
 
+      // Try to load book types
+      try {
+        const bookTypesResponse = await bookTypesApi.getActive();
+        if (bookTypesResponse.success && bookTypesResponse.data && bookTypesResponse.data.length > 0) {
+          setBookTypes(bookTypesResponse.data);
+        }
+      } catch (error) {
+        console.warn('Book Types API not available, using default types');
+      }
+
+      // Try to load book hubs (component types)
+      try {
+        const bookHubsResponse = await bookHubsApi.getActive();
+        if (bookHubsResponse.success && bookHubsResponse.data && bookHubsResponse.data.length > 0) {
+          setBookHubs(bookHubsResponse.data);
+        }
+      } catch (error) {
+        console.warn('Book Hubs API not available, using default hubs');
+      }
+
+      // Try to load book statuses
+      try {
+        const bookStatusesResponse = await bookStatusesApi.getActive();
+        if (bookStatusesResponse.success && bookStatusesResponse.data && bookStatusesResponse.data.length > 0) {
+          setBookStatusesList(bookStatusesResponse.data);
+        }
+      } catch (error) {
+        console.warn('Book Statuses API not available, using default statuses');
+      }
+
       // Try to load books
       let booksData: Book[] = [];
       try {
@@ -255,6 +298,7 @@ export default function BooksPage() {
         setBooks(booksData);
         setFilteredBooks(booksData);
       }
+      
       try {
         const statsResponse = await booksApi.getStats();
         if (statsResponse.success) {
@@ -472,6 +516,16 @@ export default function BooksPage() {
       message,
       severity: 'warning'
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'published': return 'success';
+      case 'draft': return 'default';
+      case 'review': return 'warning';
+      case 'archived': return 'secondary';
+      default: return 'default';
+    }
   };
 
   // Image handling functions
@@ -727,6 +781,7 @@ export default function BooksPage() {
         category: selectedBook.category?.trim() || '',
         description: selectedBook.description?.trim() || '',
         type: isAudiobook ? 'Audiobook' : (selectedBook.type || 'Books'),
+        componentType: selectedBook.componentType || 'none',
         price: Number(selectedBook.price) || 0,
         format: normalizedFormat, // Default to E-book if no format specified; ensure Audiobook format matches type
         featured: selectedBook.featured || false,
@@ -734,7 +789,7 @@ export default function BooksPage() {
         status: selectedBook.status || 'draft',
         tags: selectedBook.tags || [],
         publishDate: selectedBook.publishDate || new Date().toISOString().split('T')[0],
-        isbn: selectedBook.isbn?.trim(),
+        isbn: selectedBook.isbn?.trim() || undefined,
         pages: selectedBook.pages ? Number(selectedBook.pages) : undefined,
         rating: selectedBook.rating,
         reviews: selectedBook.reviews,
@@ -1031,18 +1086,13 @@ export default function BooksPage() {
       });
 
       if (response.success) {
-        // Refresh categories list
-        const categoriesResponse = await categoriesApi.getActive();
-        if (categoriesResponse.success) {
-          setCategories(categoriesResponse.data);
-        }
-
-        // Set the new category as selected in the book form
+        // Add new category to list
+        setCategories([...categories, response.data]);
+        // Auto-select the new category
         setSelectedBook({
           ...selectedBook,
           category: response.data.name
         });
-
         // Reset form and close dialog
         setNewCategoryData({ name: '', description: '', color: '#1976d2' });
         setCategoryDialogOpen(false);
@@ -1054,13 +1104,86 @@ export default function BooksPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'published': return 'success';
-      case 'review': return 'warning';
-      case 'draft': return 'info';
-      case 'archived': return 'secondary';
-      default: return 'default';
+  // Handler for creating new book type
+  const handleCreateBookType = async () => {
+    if (!newBookTypeData.name.trim()) {
+      showErrorAlert('Book type name is required');
+      return;
+    }
+
+    try {
+      const response = await bookTypesApi.create({
+        name: newBookTypeData.name.trim(),
+        description: newBookTypeData.description.trim() || undefined,
+        color: newBookTypeData.color
+      });
+
+      if (response.success) {
+        setBookTypes([...bookTypes, response.data]);
+        setSelectedBook({ ...selectedBook, type: response.data.name as any });
+        setNewBookTypeData({ name: '', description: '', color: '#1976d2' });
+        setBookTypeDialogOpen(false);
+        showSuccessAlert(`Book Type "${response.data.name}" created successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error creating book type:', error);
+      showErrorAlert('Failed to create book type', error.message || 'Please try again');
+    }
+  };
+
+  // Handler for creating new book hub
+  const handleCreateBookHub = async () => {
+    if (!newBookHubData.name.trim() || !newBookHubData.value.trim()) {
+      showErrorAlert('Book hub name and value are required');
+      return;
+    }
+
+    try {
+      const response = await bookHubsApi.create({
+        name: newBookHubData.name.trim(),
+        value: newBookHubData.value.trim(),
+        description: newBookHubData.description.trim() || undefined,
+        color: newBookHubData.color
+      });
+
+      if (response.success) {
+        setBookHubs([...bookHubs, response.data]);
+        setSelectedBook({ ...selectedBook, componentType: response.data.value as any });
+        setNewBookHubData({ name: '', value: '', description: '', color: '#9c27b0' });
+        setBookHubDialogOpen(false);
+        showSuccessAlert(`Books Hub "${response.data.name}" created successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error creating book hub:', error);
+      showErrorAlert('Failed to create book hub', error.message || 'Please try again');
+    }
+  };
+
+  // Handler for creating new book status
+  const handleCreateBookStatus = async () => {
+    if (!newBookStatusData.name.trim() || !newBookStatusData.value.trim()) {
+      showErrorAlert('Status name and value are required');
+      return;
+    }
+
+    try {
+      const response = await bookStatusesApi.create({
+        name: newBookStatusData.name.trim(),
+        value: newBookStatusData.value.trim(),
+        description: newBookStatusData.description.trim() || undefined,
+        color: newBookStatusData.color
+      });
+
+      if (response.success) {
+        setBookStatusesList([...bookStatusesList, response.data]);
+        setSelectedBook({ ...selectedBook, status: response.data.value as any });
+        setNewBookStatusData({ name: '', value: '', description: '', color: '#757575' });
+        setBookStatusDialogOpen(false);
+        showSuccessAlert(`Status "${response.data.name}" created successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error creating book status:', error);
+      showErrorAlert('Failed to create status', error.message || 'Please try again');
     }
   };
 
@@ -1218,10 +1341,10 @@ export default function BooksPage() {
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth size="small">
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Book Type</InputLabel>
                 <Select
                   value={filterType}
-                  label="Type"
+                  label="Book Type"
                   onChange={(e) => setFilterType(e.target.value)}
                 >
                   <MenuItem value="">All Types</MenuItem>
@@ -1232,10 +1355,10 @@ export default function BooksPage() {
             </Grid>
             <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
+                <InputLabel>Book Category</InputLabel>
                 <Select
                   value={filterCategory}
-                  label="Category"
+                  label="Book Category"
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
                   <MenuItem value="">All Categories</MenuItem>
@@ -1540,10 +1663,10 @@ export default function BooksPage() {
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                 <FormControl fullWidth error={!!validationErrors.category}>
-                  <InputLabel>Category *</InputLabel>
+                  <InputLabel>Book Category *</InputLabel>
                   <Select
                     value={selectedBook?.category || ''}
-                    label="Category *"
+                    label="Book Category *"
                     onChange={(e) => setSelectedBook({...selectedBook, category: e.target.value})}
                     disabled={dialogMode === 'view'}
                   >
@@ -1561,7 +1684,18 @@ export default function BooksPage() {
                   <IconButton
                     onClick={() => setCategoryDialogOpen(true)}
                     disabled={dialogMode === 'view'}
-                    sx={{ mt: 1 }}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'primary.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500'
+                      }
+                    }}
                   >
                     <Add />
                   </IconButton>
@@ -1569,40 +1703,151 @@ export default function BooksPage() {
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  value={selectedBook?.type || 'Books'}
-                  label="Type"
-                  onChange={(e) => setSelectedBook({ ...selectedBook, type: e.target.value as any })}
-                  disabled={dialogMode === 'view'}
-                >
-                  <MenuItem value="Books">Books</MenuItem>
-                  <MenuItem value="Audiobook">Audiobook</MenuItem>
-                </Select>
-              </FormControl>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel>Book Type</InputLabel>
+                  <Select
+                    value={selectedBook?.type || 'Books'}
+                    label="Book Type"
+                    onChange={(e) => setSelectedBook({ ...selectedBook, type: e.target.value as any })}
+                    disabled={dialogMode === 'view'}
+                  >
+                    {bookTypes.length > 0 ? (
+                      bookTypes.map((type) => (
+                        <MenuItem key={type._id} value={type.name}>
+                          {type.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <>
+                        <MenuItem value="Books">Books</MenuItem>
+                        <MenuItem value="Audiobook">Audiobook</MenuItem>
+                      </>
+                    )}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add New Book Type">
+                  <IconButton
+                    onClick={() => setBookTypeDialogOpen(true)}
+                    disabled={dialogMode === 'view'}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'secondary.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'secondary.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500'
+                      }
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={selectedBook?.status || ''}
-                  label="Status"
-                  onChange={(e) =>
-                    setSelectedBook({
-                      ...selectedBook,
-                      status: e.target.value as 'draft' | 'review' | 'published' | 'archived'
-                    })
-                  }
-                  disabled={dialogMode === 'view'}
-                >
-                  {statuses.map((status) => (
-                    <MenuItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel>Books Hub</InputLabel>
+                  <Select
+                    value={selectedBook?.componentType || 'none'}
+                    label="Books Hub"
+                    onChange={(e) => setSelectedBook({ ...selectedBook, componentType: e.target.value as any })}
+                    disabled={dialogMode === 'view'}
+                  >
+                    {/* Always include None option first */}
+                    <MenuItem value="none">None (Regular Book)</MenuItem>
+                    {bookHubs.length > 0 ? (
+                      bookHubs.map((hub) => (
+                        <MenuItem key={hub._id} value={hub.value}>
+                          {hub.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <>
+                        <MenuItem value="free-summaries">Free Summaries</MenuItem>
+                        <MenuItem value="trending-books">Trending Books</MenuItem>
+                        <MenuItem value="premium-summaries">Premium Summaries</MenuItem>
+                      </>
+                    )}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add New Books Hub">
+                  <IconButton
+                    onClick={() => setBookHubDialogOpen(true)}
+                    disabled={dialogMode === 'view'}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'success.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'success.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500'
+                      }
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={selectedBook?.status || ''}
+                    label="Status"
+                    onChange={(e) =>
+                      setSelectedBook({
+                        ...selectedBook,
+                        status: e.target.value as 'draft' | 'review' | 'published' | 'archived'
+                      })
+                    }
+                    disabled={dialogMode === 'view'}
+                  >
+                    {bookStatusesList.length > 0 ? (
+                      bookStatusesList.map((status) => (
+                        <MenuItem key={status._id} value={status.value}>
+                          {status.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      statuses.map((status) => (
+                        <MenuItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add New Status">
+                  <IconButton
+                    onClick={() => setBookStatusDialogOpen(true)}
+                    disabled={dialogMode === 'view'}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'warning.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'warning.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500'
+                      }
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -2877,5 +3122,238 @@ export default function BooksPage() {
           </Typography>
         </Box>
       </Backdrop>
+
+      {/* Book Type Creation Dialog */}
+      <Dialog
+        open={bookTypeDialogOpen}
+        onClose={() => setBookTypeDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add New Book Type</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Book Type Name"
+              value={newBookTypeData.name}
+              onChange={(e) => setNewBookTypeData({...newBookTypeData, name: e.target.value})}
+              sx={{ mb: 2 }}
+              required
+              autoFocus
+              placeholder="e.g., E-Book, Hardcover"
+            />
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              value={newBookTypeData.description}
+              onChange={(e) => setNewBookTypeData({...newBookTypeData, description: e.target.value})}
+              multiline
+              rows={2}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2">Color:</Typography>
+              <input
+                type="color"
+                value={newBookTypeData.color}
+                onChange={(e) => setNewBookTypeData({...newBookTypeData, color: e.target.value})}
+                style={{
+                  width: 50,
+                  height: 40,
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer'
+                }}
+              />
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  backgroundColor: newBookTypeData.color,
+                  border: '1px solid #ddd'
+                }}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBookTypeDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateBookType}
+            variant="contained"
+            disabled={!newBookTypeData.name.trim()}
+          >
+            Create Book Type
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Books Hub Creation Dialog */}
+      <Dialog
+        open={bookHubDialogOpen}
+        onClose={() => setBookHubDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add New Books Hub</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Hub Name"
+              value={newBookHubData.name}
+              onChange={(e) => {
+                const name = e.target.value;
+                setNewBookHubData({
+                  ...newBookHubData, 
+                  name,
+                  value: name.toLowerCase().replace(/\s+/g, '-')
+                });
+              }}
+              sx={{ mb: 2 }}
+              required
+              autoFocus
+              placeholder="e.g., Free Summaries"
+            />
+            <TextField
+              fullWidth
+              label="Hub Value (System Name)"
+              value={newBookHubData.value}
+              onChange={(e) => setNewBookHubData({...newBookHubData, value: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
+              sx={{ mb: 2 }}
+              required
+              helperText="Auto-generated from name. Used internally."
+            />
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              value={newBookHubData.description}
+              onChange={(e) => setNewBookHubData({...newBookHubData, description: e.target.value})}
+              multiline
+              rows={2}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2">Color:</Typography>
+              <input
+                type="color"
+                value={newBookHubData.color}
+                onChange={(e) => setNewBookHubData({...newBookHubData, color: e.target.value})}
+                style={{
+                  width: 50,
+                  height: 40,
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer'
+                }}
+              />
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  backgroundColor: newBookHubData.color,
+                  border: '1px solid #ddd'
+                }}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBookHubDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateBookHub}
+            variant="contained"
+            disabled={!newBookHubData.name.trim() || !newBookHubData.value.trim()}
+          >
+            Create Books Hub
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Book Status Creation Dialog */}
+      <Dialog
+        open={bookStatusDialogOpen}
+        onClose={() => setBookStatusDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add New Status</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Status Name"
+              value={newBookStatusData.name}
+              onChange={(e) => {
+                const name = e.target.value;
+                setNewBookStatusData({
+                  ...newBookStatusData,
+                  name,
+                  value: name.toLowerCase().replace(/\s+/g, '-')
+                });
+              }}
+              sx={{ mb: 2 }}
+              required
+              autoFocus
+              placeholder="e.g., In Review"
+            />
+            <TextField
+              fullWidth
+              label="Status Value (System Name)"
+              value={newBookStatusData.value}
+              onChange={(e) => setNewBookStatusData({...newBookStatusData, value: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
+              sx={{ mb: 2 }}
+              required
+              helperText="Auto-generated from name. Used internally."
+            />
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              value={newBookStatusData.description}
+              onChange={(e) => setNewBookStatusData({...newBookStatusData, description: e.target.value})}
+              multiline
+              rows={2}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2">Color:</Typography>
+              <input
+                type="color"
+                value={newBookStatusData.color}
+                onChange={(e) => setNewBookStatusData({...newBookStatusData, color: e.target.value})}
+                style={{
+                  width: 50,
+                  height: 40,
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer'
+                }}
+              />
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  backgroundColor: newBookStatusData.color,
+                  border: '1px solid #ddd'
+                }}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBookStatusDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateBookStatus}
+            variant="contained"
+            disabled={!newBookStatusData.name.trim() || !newBookStatusData.value.trim()}
+          >
+            Create Status
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>;
 }

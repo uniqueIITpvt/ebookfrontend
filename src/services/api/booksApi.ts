@@ -27,6 +27,7 @@ export interface Book {
   description: string;
   category: string;
   type: 'Books' | 'Audiobook';
+  componentType?: 'none' | 'free-summaries' | 'trending-books' | 'premium-summaries';
   price: string; // Backend sends formatted string like "$24.99"
   originalPrice?: string;
   rating: number;
@@ -88,6 +89,7 @@ export interface BookPayload {
   description: string;
   category: string;
   type: 'Books' | 'Audiobook';
+  componentType?: 'none' | 'free-summaries' | 'trending-books' | 'premium-summaries';
   price: number; // Send as number to backend
   originalPrice?: number;
   rating?: number;
@@ -192,20 +194,27 @@ class BooksApiService {
     
     // Add book data as JSON fields
     Object.entries(bookData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          // Handle format array specially - append each value individually
-          if (key === 'format') {
-            value.forEach((format, index) => {
-              formData.append(`format[${index}]`, format);
-            });
-          } else {
-            // For other arrays, use JSON.stringify
-            formData.append(key, JSON.stringify(value));
-          }
-        } else {
-          formData.append(key, value.toString());
-        }
+      // Don't append if null or undefined
+      if (value === null || value === undefined) return;
+
+      // Handle empty string for fields that should be null (like ISBN) to avoid DB uniqueness conflicts
+      if (typeof value === 'string' && value.trim() === '') {
+        // Only skip if it's a field known for unique constraints, or just skip all empty strings 
+        // as the backend defaults should take over. For ISBN specifically:
+        if (key === 'isbn') return;
+      }
+
+      if (Array.isArray(value)) {
+        // Standard way to send arrays in FormData is to append same key multiple times
+        value.forEach((val) => {
+          formData.append(key, val);
+        });
+      } else if (typeof value === 'boolean') {
+        // Send as string "true"/"false" - Multer/Express will parse this if configured, 
+        // otherwise backend handles it manually
+        formData.append(key, value.toString());
+      } else {
+        formData.append(key, value.toString());
       }
     });
     
@@ -246,24 +255,28 @@ class BooksApiService {
     
     // Add book data as JSON fields
     Object.entries(bookData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // Skip base64 image field when coverImage file is provided
-        if (key === 'image' && files.coverImage) {
-          return;
-        }
-        if (Array.isArray(value)) {
-          // Handle format array specially - append each value individually
-          if (key === 'format') {
-            value.forEach((format, index) => {
-              formData.append(`format[${index}]`, format);
-            });
-          } else {
-            // For other arrays, use JSON.stringify
-            formData.append(key, JSON.stringify(value));
-          }
-        } else {
-          formData.append(key, value.toString());
-        }
+      // Don't append if null or undefined
+      if (value === null || value === undefined) return;
+
+      // Skip base64 image field when coverImage file is provided
+      if (key === 'image' && files.coverImage) {
+        return;
+      }
+
+      // Handle empty string for fields that should be null (like ISBN) to avoid DB uniqueness conflicts
+      if (typeof value === 'string' && value.trim() === '') {
+        if (key === 'isbn') return;
+      }
+
+      if (Array.isArray(value)) {
+        // Standard way to send arrays in FormData is to append same key multiple times
+        value.forEach((val) => {
+          formData.append(key, val);
+        });
+      } else if (typeof value === 'boolean') {
+        formData.append(key, value.toString());
+      } else {
+        formData.append(key, value.toString());
       }
     });
     
@@ -313,10 +326,31 @@ class BooksApiService {
     return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books/search?${searchParams.toString()}`);
   }
 
+  // Get trending books (using trending endpoint)
+  async getTrendingBooks(limit: number = 10): Promise<PaginatedResponse<Book>> {
+    return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books/trending?limit=${limit}`);
+  }
+
+  // Get free summaries (using componentType filter)
+  async getFreeSummaries(limit: number = 12): Promise<PaginatedResponse<Book>> {
+    return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books?componentType=free-summaries&limit=${limit}`);
+  }
+
+  // Get premium summaries (using componentType filter)
+  async getPremiumSummaries(limit: number = 12): Promise<PaginatedResponse<Book>> {
+    return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books?componentType=premium-summaries&limit=${limit}`);
+  }
+
+  // Get books by component type (unified method)
+  async getBooksByComponentType(componentType: 'free-summaries' | 'trending-books' | 'premium-summaries', limit: number = 12): Promise<PaginatedResponse<Book>> {
+    return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books?componentType=${componentType}&limit=${limit}`);
+  }
+
   // Get featured books
   async getFeaturedBooks(limit: number = 5): Promise<PaginatedResponse<Book>> {
     return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books?featured=true&limit=${limit}`);
   }
+
   // Get bestsellers
   async getBestsellers(limit: number = 10): Promise<PaginatedResponse<Book>> {
     return this.fetchWithErrorHandling<PaginatedResponse<Book>>(`/books?bestseller=true&limit=${limit}`);
@@ -326,7 +360,7 @@ class BooksApiService {
   async getCategories(): Promise<{ success: boolean; data: string[] }> {
     return {
       success: true,
-      data: ['Mental Health', 'Psychology', 'Self-Help', 'Wellness', 'Journal', 'Memoir']
+      data: ['Fiction', 'Non-Fiction', 'Science', 'Technology', 'Biography', 'Self-Help']
     };
   }
 
@@ -354,7 +388,7 @@ class BooksApiService {
           featured: books.filter(book => book.featured).length,
           bestsellers: books.filter(book => book.bestseller).length,
           totalSales: books.reduce((sum, book) => sum + (book.sales || 0), 0),
-          categories: ['Mental Health', 'Psychology', 'Self-Help', 'Wellness', 'Journal', 'Memoir']
+          categories: ['Fiction', 'Non-Fiction', 'Science', 'Technology', 'Biography', 'Self-Help']
         }
       };
     } catch (error) {
@@ -382,6 +416,7 @@ class BooksApiService {
       description: book.description,
       category: book.category,
       type: book.type,
+      componentType: book.componentType,
       // Convert price strings back to numbers for form
       price: parseFloat(book.price.replace(/[^0-9.]/g, '')) || 0,
       originalPrice: book.originalPrice ? parseFloat(book.originalPrice.replace(/[^0-9.]/g, '')) : undefined,

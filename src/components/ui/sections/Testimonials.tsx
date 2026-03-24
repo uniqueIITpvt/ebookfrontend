@@ -101,8 +101,8 @@ const testimonials = [
   {
     id: 5,
     name: 'Lisa Park',
-    role: 'Nurse Practitioner',
-    company: 'City Medical Center',
+    role: 'Librarian',
+    company: 'City Library',
     image: '👩‍⚕️',
     content:
       'Great catalog and smooth discovery experience. The audiobook picks helped me stay productive and motivated.',
