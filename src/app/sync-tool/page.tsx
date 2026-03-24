@@ -18,7 +18,7 @@ making it feel like I'm speaking directly to you.
 In our real voice books, we'll dive deep into topics like
 how your brain responds to stress,
 why small habits can rewire your mindset,
-and how you can take simple steps toward better mental health every day.
+and how you can discover your next great read today.
 
 And here's the exciting part —
 very soon, we'll be releasing full episodes for you to enjoy.

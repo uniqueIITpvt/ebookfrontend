@@ -12,11 +12,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
-import { freeSummariesApi, type FreeSummary } from '@/services/api/freeSummariesApi';
-import { trendingBooksApi, type TrendingBook } from '@/services/api/trendingBooksApi';
-import { premiumSummariesApi, type PremiumSummary } from '@/services/api/premiumSummariesApi';
-// import { ContentLoader } from '../primitives/Loader';
-// import LoadingAnimation from '../LoadingAnimation';
+import { booksApi, type Book } from '@/services/api/booksApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -74,9 +70,9 @@ export default function MediaContentMobile() {
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
-  const [freeSummaries, setFreeSummaries] = useState<FreeSummary[]>([]);
-  const [trendingBooks, setTrendingBooks] = useState<TrendingBook[]>([]);
-  const [premiumSummaries, setPremiumSummaries] = useState<PremiumSummary[]>([]);
+  const [freeSummaries, setFreeSummaries] = useState<Book[]>([]);
+  const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+  const [premiumSummaries, setPremiumSummaries] = useState<Book[]>([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingFreeSummaries, setIsLoadingFreeSummaries] = useState(true);
   const [isLoadingTrendingBooks, setIsLoadingTrendingBooks] = useState(true);
@@ -124,9 +120,10 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch free summaries using unified Books API
         setIsLoadingFreeSummaries(true);
-        const data = await freeSummariesApi.getFeaturedFreeSummaries(6);
-        setFreeSummaries(data);
+        const response = await booksApi.getBooksByComponentType('free-summaries', 6);
+        setFreeSummaries(response.data);
       } catch (err) {
         console.error('Error fetching free summaries:', err);
         setFreeSummaries([]);
@@ -135,9 +132,10 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch trending books using unified Books API
         setIsLoadingTrendingBooks(true);
-        const data = await trendingBooksApi.getFeaturedTrendingBooks(6);
-        setTrendingBooks(data);
+        const response = await booksApi.getBooksByComponentType('trending-books', 6);
+        setTrendingBooks(response.data);
       } catch (err) {
         console.error('Error fetching trending books:', err);
         setTrendingBooks([]);
@@ -146,11 +144,13 @@ export default function MediaContentMobile() {
       }
 
       try {
+        // Fetch premium summaries using unified Books API
         setIsLoadingPremiumSummaries(true);
-        const data = await premiumSummariesApi.getLatestPremiumSummaries(6);
-        setPremiumSummaries(data);
+        const response = await booksApi.getBooksByComponentType('premium-summaries', 6);
+        setPremiumSummaries(response.data);
       } catch (err) {
         console.error('Error fetching premium summaries:', err);
+        setPremiumSummaries([]);
       } finally {
         setIsLoadingPremiumSummaries(false);
       }

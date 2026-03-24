@@ -172,7 +172,7 @@ export default function ButtonExamples() {
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 text-center">
           <h3 className="text-2xl font-bold text-slate-900 mb-4">
-            Ready to Transform Your Mental Health?
+            Ready to Transform Your Learning Journey?
           </h3>
           <p className="text-slate-600 mb-6 max-w-2xl mx-auto">
             Take the first step towards better mental wellness with our expert guidance and support.
@@ -197,7 +197,7 @@ export default function ButtonExamples() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <h4 className="font-semibold text-slate-900">Newsletter Subscription</h4>
-              <p className="text-sm text-slate-600">Get weekly mental health tips and insights</p>
+              <p className="text-sm text-slate-600">Get weekly reading tips and insights</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">

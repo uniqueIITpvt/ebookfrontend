@@ -361,8 +361,8 @@ export default function Navbar() {
                   alt='TechUniqueIIT Research Center'
                   width={200}
                   height={100}
+                  loading='eager'
                   className='h-14 sm:h-16 w-auto object-contain'
-                  priority
                 />
               </Link>
             </div>

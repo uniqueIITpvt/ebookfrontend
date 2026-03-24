@@ -2,15 +2,16 @@ import type { NextConfig } from 'next';
 
 // Backend URL configuration
 // TOGGLE: Set to 'true' for local backend, 'false' for deployed backend
-const USE_LOCAL_BACKEND = false;
-const BACKEND_URL = USE_LOCAL_BACKEND 
-  ? 'http://localhost:5000' 
-  : (process.env.NEXT_PUBLIC_API_URL || 'https://ebookbackend.vercel.app');
+const USE_LOCAL_BACKEND = true;
+const BACKEND_URL = USE_LOCAL_BACKEND
+  ? 'http://localhost:5000'
+  : (process.env.NEXT_PUBLIC_API_URL || '');
 
 console.log(`[Next Config] Using ${USE_LOCAL_BACKEND ? 'LOCAL' : 'DEPLOYED'} backend: ${BACKEND_URL}`);
 
 const nextConfig: NextConfig = {
   images: {
+    qualities: [75, 100],
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {
@@ -28,63 +29,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-      },
-      // Medical and Health Websites
-      {
-        protocol: 'https',
-        hostname: 'www.nimh.nih.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'nimh.nih.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.nih.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'nih.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.cdc.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdc.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.who.int',
-      },
-      {
-        protocol: 'https',
-        hostname: 'who.int',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.mayoclinic.org',
-      },
-      {
-        protocol: 'https',
-        hostname: 'mayoclinic.org',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.webmd.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'webmd.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'medlineplus.gov',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.medlineplus.gov',
       },
       // Placeholder images
       {

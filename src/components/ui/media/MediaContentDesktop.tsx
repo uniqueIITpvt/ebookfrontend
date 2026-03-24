@@ -10,9 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
-import { freeSummariesApi, type FreeSummary } from '@/services/api/freeSummariesApi';
-import { trendingBooksApi, type TrendingBook } from '@/services/api/trendingBooksApi';
-import { premiumSummariesApi, type PremiumSummary } from '@/services/api/premiumSummariesApi';
+import { booksApi, type Book } from '@/services/api/booksApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -64,9 +62,9 @@ interface Book {
 
 export default function MediaContentDesktop() {
   const [books, setBooks] = useState<Book[]>([]);
-  const [freeSummaries, setFreeSummaries] = useState<FreeSummary[]>([]);
-  const [trendingBooks, setTrendingBooks] = useState<TrendingBook[]>([]);
-  const [premiumSummaries, setPremiumSummaries] = useState<PremiumSummary[]>([]);
+  const [freeSummaries, setFreeSummaries] = useState<Book[]>([]);
+  const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+  const [premiumSummaries, setPremiumSummaries] = useState<Book[]>([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingFreeSummaries, setIsLoadingFreeSummaries] = useState(true);
   const [isLoadingTrendingBooks, setIsLoadingTrendingBooks] = useState(true);
@@ -103,12 +101,17 @@ export default function MediaContentDesktop() {
       try {
         // Fetch books
         setIsLoadingBooks(true);
-        const booksResponse = await fetch(`${API_URL}/books`);
-        if (booksResponse.ok) {
-          const booksData = await booksResponse.json();
-          if (booksData.success && booksData.data) {
-            setBooks(booksData.data.slice(0, 6));
-          }
+        const response = await fetch(`${API_URL}/books`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch books');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Get first 6 books for home page
+          setBooks(data.data.slice(0, 6));
         }
       } catch (err) {
         console.error('Error fetching books:', err);
@@ -117,10 +120,10 @@ export default function MediaContentDesktop() {
       }
 
       try {
-        // Fetch free summaries
+        // Fetch free summaries using unified Books API
         setIsLoadingFreeSummaries(true);
-        const freeSummariesData = await freeSummariesApi.getFeaturedFreeSummaries(6);
-        setFreeSummaries(freeSummariesData);
+        const freeSummariesResponse = await booksApi.getBooksByComponentType('free-summaries', 6);
+        setFreeSummaries(freeSummariesResponse.data);
       } catch (err) {
         console.error('Error fetching free summaries:', err);
       } finally {
@@ -128,10 +131,10 @@ export default function MediaContentDesktop() {
       }
 
       try {
-        // Fetch trending books
+        // Fetch trending books using unified Books API
         setIsLoadingTrendingBooks(true);
-        const trendingBooksData = await trendingBooksApi.getFeaturedTrendingBooks(6);
-        setTrendingBooks(trendingBooksData);
+        const trendingBooksResponse = await booksApi.getBooksByComponentType('trending-books', 6);
+        setTrendingBooks(trendingBooksResponse.data);
       } catch (err) {
         console.error('Error fetching trending books:', err);
       } finally {
@@ -139,10 +142,10 @@ export default function MediaContentDesktop() {
       }
 
       try {
-        // Fetch premium summaries
+        // Fetch premium summaries using unified Books API
         setIsLoadingPremiumSummaries(true);
-        const premiumSummariesData = await premiumSummariesApi.getLatestPremiumSummaries(6);
-        setPremiumSummaries(premiumSummariesData);
+        const premiumSummariesResponse = await booksApi.getBooksByComponentType('premium-summaries', 6);
+        setPremiumSummaries(premiumSummariesResponse.data);
       } catch (err) {
         console.error('Error fetching premium summaries:', err);
       } finally {
@@ -411,7 +414,7 @@ export default function MediaContentDesktop() {
             ) : (
               freeSummaries.slice(0, itemsPerPage).map((summary, index) => (
               <div
-                key={summary._id}
+                key={summary.id}
                 className='group relative w-full'
                 style={{ 
                   animationDelay: `${index * 100}ms`,
@@ -487,9 +490,9 @@ export default function MediaContentDesktop() {
                       </p>
                       <div className='text-xs text-white/80 mb-4'>
                         <div className='font-medium'>{summary.author}</div>
-                        <div>{summary.pages ? `${summary.pages} pages` : summary.readingTime || 'Free Summary'}</div>
+                        <div>{summary.pages ? `${summary.pages} pages` : 'Free Summary'}</div>
                       </div>
-                      <Link href={`/free-summaries/${summary.slug}`}>
+                      <Link href={`/books/${generateBookSlug(summary.title)}`}>
                         <Button variant="secondary" size="sm" fullWidth>
                           View Details
                         </Button>
@@ -552,7 +555,7 @@ export default function MediaContentDesktop() {
             ) : (
               trendingBooks.slice(0, itemsPerPage).map((book, index) => (
               <div
-                key={book._id}
+                key={book.id}
                 className='group relative w-full'
                 style={{ 
                   animationDelay: `${index * 100}ms`,
@@ -630,7 +633,7 @@ export default function MediaContentDesktop() {
                         <div className='font-medium'>{book.author}</div>
                         <div>{book.pages ? `${book.pages} pages` : 'Trending'}</div>
                       </div>
-                      <Link href={`/trending-books/${book.slug}`}>
+                      <Link href={`/books/${generateBookSlug(book.title)}`}>
                         <Button variant="secondary" size="sm" fullWidth>
                           View Details
                         </Button>
@@ -694,7 +697,7 @@ export default function MediaContentDesktop() {
             ) : (
               premiumSummaries.slice(0, itemsPerPage).map((summary, index) => (
               <div
-                key={summary._id}
+                key={summary.id}
                 className='group relative w-full'
                 style={{ 
                   animationDelay: `${index * 100}ms`,
@@ -772,7 +775,7 @@ export default function MediaContentDesktop() {
                         <div className='font-medium'>{summary.author}</div>
                         <div>{summary.pages ? `${summary.pages} pages` : 'Premium Summary'}</div>
                       </div>
-                      <Link href={`/premium-summaries/${summary.slug}`}>
+                      <Link href={`/books/${generateBookSlug(summary.title)}`}>
                         <Button variant="secondary" size="sm" fullWidth>
                           View Details
                         </Button>

@@ -52,8 +52,8 @@ export default function TestLexicalPage() {
             variant="contained" 
             onClick={() => {
               const sampleContent = `
-                <h2>Sample Medical Blog Post</h2>
-                <p>This is a <strong>sample medical blog post</strong> about <em>cardiovascular health</em>.</p>
+                <h2>Sample Blog Post</h2>
+                <p>This is a <strong>sample blog post</strong> about <em>digital reading habits</em>.</p>
                 
                 <h3>Key Points:</h3>
                 <ul>
@@ -66,7 +66,7 @@ export default function TestLexicalPage() {
                   Prevention is better than cure.
                 </blockquote>
                 
-                <p>For more information, consult with your healthcare provider.</p>
+                <p>For more information, subscribe to our newsletter.</p>
               `;
               setContent(sampleContent);
               setExcerpt('<p>Learn about <strong>cardiovascular health</strong> and prevention strategies.</p>');

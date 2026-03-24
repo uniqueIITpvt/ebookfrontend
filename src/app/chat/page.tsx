@@ -7,7 +7,7 @@ export default function ChatPage() {
             Chat with UniqueIIT Research Center Assistant
           </h1>
           <p className="text-slate-600">
-            Get instant support for your mental health questions
+            Get instant support for finding your next great read
           </p>
         </div>
         
