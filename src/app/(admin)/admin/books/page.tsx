@@ -1758,6 +1758,8 @@ export default function BooksPage() {
                     onChange={(e) => setSelectedBook({ ...selectedBook, componentType: e.target.value as any })}
                     disabled={dialogMode === 'view'}
                   >
+                    {/* Always include None option first */}
+                    <MenuItem value="none">None (Regular Book)</MenuItem>
                     {bookHubs.length > 0 ? (
                       bookHubs.map((hub) => (
                         <MenuItem key={hub._id} value={hub.value}>
@@ -1766,7 +1768,6 @@ export default function BooksPage() {
                       ))
                     ) : (
                       <>
-                        <MenuItem value="none">None (Regular Book)</MenuItem>
                         <MenuItem value="free-summaries">Free Summaries</MenuItem>
                         <MenuItem value="trending-books">Trending Books</MenuItem>
                         <MenuItem value="premium-summaries">Premium Summaries</MenuItem>

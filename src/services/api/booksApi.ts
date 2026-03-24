@@ -194,20 +194,27 @@ class BooksApiService {
     
     // Add book data as JSON fields
     Object.entries(bookData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          // Handle format array specially - append each value individually
-          if (key === 'format') {
-            value.forEach((format, index) => {
-              formData.append(`format[${index}]`, format);
-            });
-          } else {
-            // For other arrays, use JSON.stringify
-            formData.append(key, JSON.stringify(value));
-          }
-        } else {
-          formData.append(key, value.toString());
-        }
+      // Don't append if null or undefined
+      if (value === null || value === undefined) return;
+
+      // Handle empty string for fields that should be null (like ISBN) to avoid DB uniqueness conflicts
+      if (typeof value === 'string' && value.trim() === '') {
+        // Only skip if it's a field known for unique constraints, or just skip all empty strings 
+        // as the backend defaults should take over. For ISBN specifically:
+        if (key === 'isbn') return;
+      }
+
+      if (Array.isArray(value)) {
+        // Standard way to send arrays in FormData is to append same key multiple times
+        value.forEach((val) => {
+          formData.append(key, val);
+        });
+      } else if (typeof value === 'boolean') {
+        // Send as string "true"/"false" - Multer/Express will parse this if configured, 
+        // otherwise backend handles it manually
+        formData.append(key, value.toString());
+      } else {
+        formData.append(key, value.toString());
       }
     });
     
@@ -248,24 +255,28 @@ class BooksApiService {
     
     // Add book data as JSON fields
     Object.entries(bookData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // Skip base64 image field when coverImage file is provided
-        if (key === 'image' && files.coverImage) {
-          return;
-        }
-        if (Array.isArray(value)) {
-          // Handle format array specially - append each value individually
-          if (key === 'format') {
-            value.forEach((format, index) => {
-              formData.append(`format[${index}]`, format);
-            });
-          } else {
-            // For other arrays, use JSON.stringify
-            formData.append(key, JSON.stringify(value));
-          }
-        } else {
-          formData.append(key, value.toString());
-        }
+      // Don't append if null or undefined
+      if (value === null || value === undefined) return;
+
+      // Skip base64 image field when coverImage file is provided
+      if (key === 'image' && files.coverImage) {
+        return;
+      }
+
+      // Handle empty string for fields that should be null (like ISBN) to avoid DB uniqueness conflicts
+      if (typeof value === 'string' && value.trim() === '') {
+        if (key === 'isbn') return;
+      }
+
+      if (Array.isArray(value)) {
+        // Standard way to send arrays in FormData is to append same key multiple times
+        value.forEach((val) => {
+          formData.append(key, val);
+        });
+      } else if (typeof value === 'boolean') {
+        formData.append(key, value.toString());
+      } else {
+        formData.append(key, value.toString());
       }
     });
     
