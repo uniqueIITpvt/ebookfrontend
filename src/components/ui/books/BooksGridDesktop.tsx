@@ -129,19 +129,41 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
   if (items.length === 0) {
     return (
       <div className={`text-center py-16 ${className}`}>
-        <p className='text-gray-600'>No books found</p>
+        <p className='text-gray-600 font-medium'>No books found matching your criteria</p>
       </div>
     );
   }
+
+  // Group items by category
+  const groupedItems = items.reduce((acc, item) => {
+    const category = item.category || 'Uncategorized';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, Book[]>);
+
+  const sortedCategories = Object.keys(groupedItems).sort();
 
   return (
     <div className={`${className}`}>
       {/* Hidden Audio Element */}
       <audio ref={audioRef} preload='metadata' />
       
-      {/* Desktop Grid - Adjusted for sidebar layout */}
-     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8'>
-            {items.map((item, index) => (
+      {sortedCategories.map((category, catIndex) => (
+        <div key={category} className={`${catIndex === 0 ? 'mb-12' : 'my-12'} last:mb-0`}>
+          {/* Category Section Header - matching user request "dark text" */}
+          <div className='flex items-center gap-4 mb-8 overflow-hidden'>
+            <h2 className='text-xl md:text-2xl font-bold text-slate-900 whitespace-nowrap'>
+              {category}
+            </h2>
+            <div className='h-[2px] w-full bg-slate-100 rounded-full'></div>
+          </div>
+
+          {/* Desktop Grid for this Category */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-8 gap-y-12'>
+            {groupedItems[category].map((item, index) => (
               item.type === 'Books' ? (
                 <Link
                   key={item.id}
@@ -372,8 +394,10 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                   </div>
                 </div>
               )
-        ))}
-      </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       {/* Audio Player Bar (appears when playing audiobooks) */}
       {currentlyPlaying && isPlaying && (

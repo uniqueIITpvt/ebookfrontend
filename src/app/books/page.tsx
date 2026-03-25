@@ -10,6 +10,8 @@ import BooksGrid from '@/components/ui/books/BooksGrid';
 
 import { API_CONFIG } from '@/config/api';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { categoriesApi } from '@/services/api/categoriesApi';
+import type { Category } from '@/services/api/categoriesApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -66,7 +68,7 @@ const BooksPage = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,17 +113,8 @@ const BooksPage = () => {
 
         if (merged.length > 0) {
           setAllBooks(merged);
-
-          const uniqueCategories = [...new Set(merged.map((book: Book) => book.category).filter(Boolean))];
-          setCategories(uniqueCategories as string[]);
-
-          const allFormats = merged.flatMap((book: Book) => book.format || []);
-          const uniqueFormats = [...new Set(allFormats)];
-          setFormats(uniqueFormats as string[]);
         } else {
           setAllBooks([]);
-          setCategories([]);
-          setFormats([]);
         }
       } catch (err) {
         console.error('Error fetching books:', err);
@@ -131,18 +124,38 @@ const BooksPage = () => {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const res = await categoriesApi.getActive();
+        if (res.success && res.data) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    };
+
     fetchBooks();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
     const typeParam = searchParams.get('type');
+    const categoryParam = searchParams.get('category');
+    const searchParam = searchParams.get('search');
+
     if (typeParam === 'Audiobook') {
       setSelectedTypes(['Audiobook']);
-      return;
-    }
-    if (typeParam === 'Books') {
+    } else if (typeParam === 'Books') {
       setSelectedTypes(['Books']);
-      return;
+    }
+
+    if (categoryParam) {
+      setSelectedCategories([categoryParam]);
+    }
+
+    if (searchParam) {
+      setSearchTerm(searchParam);
     }
   }, [searchParams]);
 
@@ -275,7 +288,7 @@ const BooksPage = () => {
               setSelectedFormats={setSelectedFormats}
               selectedTypes={selectedTypes}
               setSelectedTypes={setSelectedTypes}
-              categories={categories}
+              categories={categories.map(c => c.name)}
               formats={formats}
               resultsCount={filteredItems.length}
               isSidebarOpen={isSidebarOpen}
@@ -284,7 +297,7 @@ const BooksPage = () => {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 min-w-0 lg:pt-6">
+          <div className="flex-1 min-w-0 lg:pt-0">
             {selectedAudiobook && selectedAudiobook.type === 'Audiobook' ? (
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[#1f1f1f] text-white rounded-2xl overflow-hidden shadow-xl border border-black/10">
