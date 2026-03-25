@@ -1,5 +1,19 @@
 import type { Metadata } from 'next';
+import { Syne, DM_Sans } from 'next/font/google';
 import './globals.css';
+
+const syne = Syne({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-syne',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+});
+
 import ConditionalLayout from '@/components/ui/layout/ConditionalLayout';
 
 // Backend URL configuration
@@ -51,8 +65,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning lang='en'>
-      <body suppressHydrationWarning>
+    <html suppressHydrationWarning lang='en' className={`${syne.variable} ${dmSans.variable}`}>
+      <body suppressHydrationWarning className="font-sans">
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
