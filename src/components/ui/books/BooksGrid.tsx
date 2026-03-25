@@ -100,7 +100,7 @@ export default function BooksGrid({ items, className = '', onFilterClick, hasAct
 
   return (
     <section className={`
-      py-6 xs:py-8 sm:py-10 md:py-12 lg:py-16 
+      pb-6 xs:pb-8 sm:pb-10 md:pb-12 lg:pb-16 
       relative overflow-hidden
       ${className}
     `}>

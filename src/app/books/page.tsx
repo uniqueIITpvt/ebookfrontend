@@ -297,7 +297,7 @@ const BooksPage = () => {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 min-w-0 lg:pt-6">
+          <div className="flex-1 min-w-0 lg:pt-0">
             {selectedAudiobook && selectedAudiobook.type === 'Audiobook' ? (
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[#1f1f1f] text-white rounded-2xl overflow-hidden shadow-xl border border-black/10">

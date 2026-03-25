@@ -143,12 +143,12 @@ export default function BooksGridMobile({ items, className = '', onAudiobookSele
       
       {sortedCategories.map((category) => (
         <div key={category} className='mb-10 last:mb-0'>
-          {/* Category Section Header */}
+          {/* Category Section Header - matching user request "dark text" */}
           <div className='flex items-center gap-3 mb-5 overflow-hidden'>
-            <h2 className='text-base font-bold text-red-600 whitespace-nowrap'>
+            <h2 className='text-base font-bold text-slate-900 whitespace-nowrap'>
               {category}
             </h2>
-            <div className='h-[1px] w-full bg-red-100'></div>
+            <div className='h-[1px] w-full bg-slate-100'></div>
           </div>
 
           {/* Mobile Grid for this Category */}

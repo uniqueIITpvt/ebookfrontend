@@ -101,9 +101,9 @@ export default function BooksSidebar({
         {/* Category */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">Category</label>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
             {categories.filter(cat => cat !== 'All Books').map(category => (
-              <label key={category} className="flex items-center">
+              <label key={category} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   value={category}
@@ -115,9 +115,9 @@ export default function BooksSidebar({
                       setSelectedCategories(selectedCategories.filter(cat => cat !== category));
                     }
                   }}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
                 />
-                <span className="ml-2 text-sm text-gray-700">{category}</span>
+                <span className="ml-2 text-sm text-gray-700 group-hover:text-blue-600 transition-colors">{category}</span>
               </label>
             ))}
           </div>
@@ -227,7 +227,6 @@ export default function BooksSidebar({
         z-50 lg:z-10
         transform lg:transform-none transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        lg:mt-6
         ${className}
       `}>
         <SidebarContent />
