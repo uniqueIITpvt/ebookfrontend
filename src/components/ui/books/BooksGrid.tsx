@@ -42,9 +42,10 @@ interface BooksGridProps {
   onFilterClick?: () => void;
   hasActiveFilters?: boolean;
   onAudiobookSelect?: (item: Book) => void;
+  isLoading?: boolean;
 }
 
-export default function BooksGrid({ items, className = '', onFilterClick, hasActiveFilters = false, onAudiobookSelect }: BooksGridProps) {
+export default function BooksGrid({ items, className = '', onFilterClick, hasActiveFilters = false, onAudiobookSelect, isLoading: isLoadingProp }: BooksGridProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,18 +66,33 @@ export default function BooksGrid({ items, className = '', onFilterClick, hasAct
   }, []);
 
   // Skip loading state for instant rendering
-  if (isLoading) {
+  // Enhanced skeleton loader
+  if (isLoadingProp) {
     return (
-      <section className='pt-8 pb-12 bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 relative overflow-hidden'>
-        {/* Simple skeleton instead of spinner */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-slate-200 animate-pulse rounded-xl h-64"></div>
-            ))}
+      <div className={`space-y-12 ${className}`}>
+        {[...Array(2)].map((_, sectionIdx) => (
+          <div key={sectionIdx} className="space-y-8">
+            {/* Category Header Skeleton */}
+            <div className="flex items-center gap-4 overflow-hidden">
+              <div className="h-7 w-32 bg-slate-200 animate-pulse rounded-md"></div>
+              <div className="h-[1px] w-full bg-slate-100"></div>
+            </div>
+            
+            {/* Books Grid Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-8 gap-y-12">
+              {[...Array(sectionIdx === 0 ? 4 : 3)].map((_, i) => (
+                <div key={i} className="relative h-[440px] w-full bg-slate-100 animate-pulse rounded-xl border border-white">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-200/50"></div>
+                  <div className="absolute bottom-6 left-6 right-6 space-y-3">
+                    <div className="h-4 w-3/4 bg-slate-200 rounded"></div>
+                    <div className="h-3 w-1/2 bg-slate-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
     );
   }
 
