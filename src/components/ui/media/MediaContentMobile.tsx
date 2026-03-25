@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
 import { booksApi, type Book } from '@/services/api/booksApi';
+import { categoriesApi, type Category } from '@/services/api/categoriesApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -50,10 +51,12 @@ export default function MediaContentMobile() {
   const [freeSummaries, setFreeSummaries] = useState<Book[]>([]);
   const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
   const [premiumSummaries, setPremiumSummaries] = useState<Book[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingFreeSummaries, setIsLoadingFreeSummaries] = useState(true);
   const [isLoadingTrendingBooks, setIsLoadingTrendingBooks] = useState(true);
   const [isLoadingPremiumSummaries, setIsLoadingPremiumSummaries] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   const itemsPerPage = 2; // 2 cards per page for mobile 
   
@@ -130,6 +133,18 @@ export default function MediaContentMobile() {
         setPremiumSummaries([]);
       } finally {
         setIsLoadingPremiumSummaries(false);
+      }
+
+      try {
+        setIsLoadingCategories(true);
+        const res = await categoriesApi.getActive();
+        if (res.success && res.data) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      } finally {
+        setIsLoadingCategories(false);
       }
     };
 
@@ -246,7 +261,7 @@ export default function MediaContentMobile() {
   );
 
   return (
-    <section className='pt-4 pb-6 bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 relative overflow-hidden'>
+    <section className='py-2 bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 relative overflow-hidden'>
       {/* Main Loading Overlay */}
         {/* {isLoading && (
           <div className="absolute inset-0 z-40 bg-white/80 backdrop-blur-sm">
@@ -791,6 +806,67 @@ export default function MediaContentMobile() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Categories Section - Mobile */}
+        <div className='relative mt-10 mb-8 p-6 bg-[#0B0F1A] rounded-[32px] overflow-hidden border border-white/5'>
+          {/* Background Glows */}
+          <div className='absolute top-0 right-0 w-[200px] h-[200px] bg-indigo-600/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 pointer-events-none' />
+          
+          <div className='flex flex-col items-center mb-10'>
+            <div className='bg-gradient-to-r from-[#FF8C7E] to-[#FF4E74] text-white text-[8px] uppercase font-bold tracking-widest px-3 py-1 rounded-full mb-4 shadow-lg shadow-pink-500/20'>
+              ✦ book of the day
+            </div>
+            <div className='font-syne text-center mb-5'>
+              <div className='text-[56px] font-extrabold text-white leading-[0.8] mb-1 tracking-tighter'>21</div>
+              <div className='text-[20px] font-bold text-[#00E5BC] tracking-[0.2em] leading-none mb-1 uppercase'>Days</div>
+              <div className='text-[8px] font-medium text-white/30 tracking-[0.4em] uppercase'>Challenge</div>
+            </div>
+            <button
+              onClick={() => window.location.href = '/books'}
+              className='group relative flex items-center gap-2 px-6 py-2.5 bg-white text-black text-[11px] font-bold rounded-full transition-all active:scale-95 font-dm-sans shadow-lg'
+            >
+              <span>Start Now</span>
+              <ChevronRightIcon className='w-3 h-3' />
+            </button>
+          </div>
+
+          <div className='flex items-center gap-3 mb-6'>
+            <span className='text-[9px] font-bold text-white/20 uppercase tracking-[0.3em] font-syne shrink-0'>Browse Categories</span>
+            <div className='h-px flex-1 bg-white/5'></div>
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            {isLoadingCategories ? (
+              Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className='h-[60px] bg-white/5 animate-pulse rounded-2xl border border-white/5' />
+              ))
+            ) : (
+              categories.map((category, idx) => {
+                const icons = ['🧠', '📈', '⚡', '🔥', '🔬', '💼', '👑', '🎯', '🏆', '📡', '🎓', '💬', '⭐'];
+                const colors = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#6366F1', '#EC4899', '#F97316', '#84CC16', '#3B82F6', '#A855F7', '#F43F5E', '#14B8A6'];
+                return (
+                  <button
+                    key={category._id || category.id}
+                    onClick={() => window.location.href = `/books?category=${category.name}`}
+                    className='relative flex items-center gap-2.5 p-2.5 rounded-[16px] bg-[#1A1F2E] border border-white/5 transition-all active:scale-[0.98] overflow-hidden'
+                  >
+                    <div 
+                      className='w-7 h-7 shrink-0 rounded-[8px] flex items-center justify-center text-sm' 
+                      style={{ backgroundColor: `${colors[idx % colors.length]}15`, color: colors[idx % colors.length] }}
+                    >
+                      {icons[idx % icons.length]}
+                    </div>
+                    <div className='flex-1 flex flex-col justify-center text-left min-w-0'>
+                      <span className='font-syne font-bold text-[11px] text-white truncate leading-tight'>{category.name}</span>
+                      <div className='font-dm-sans text-white/20 text-[8px]'>{Math.floor(Math.random() * 400 + 50)}+</div>
+                    </div>
+                    <div className='absolute inset-0 opacity-0 active:opacity-[0.05] transition-opacity pointer-events-none' style={{ background: `radial-gradient(circle at center, ${colors[idx % colors.length]}, transparent 70%)` }} />
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 

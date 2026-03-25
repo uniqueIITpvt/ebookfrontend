@@ -216,25 +216,8 @@ const BooksPage = () => {
     selectedFormats.length > 0 || 
     selectedTypes.length > 0;
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className='min-h-screen bg-gray-50 pt-20'>
-        <BooksHero />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-              <p className="text-gray-600">Loading books...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Show error state
-  if (error) {
+  if (error && !isLoading) {
     return (
       <div className='min-h-screen bg-gray-50 pt-20'>
         <BooksHero />
@@ -428,6 +411,7 @@ const BooksPage = () => {
             ) : (
               <BooksGrid 
                 items={filteredItems} 
+                isLoading={isLoading}
                 className="bg-gray-50"
                 onFilterClick={() => setIsSidebarOpen(true)}
                 hasActiveFilters={hasActiveFilters}
