@@ -18,6 +18,7 @@ import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
 import { booksApi } from '@/services/api/booksApi';
 import type { Book } from '@/services/api/booksApi';
+import { categoriesApi, type Category } from '@/services/api/categoriesApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -236,38 +237,19 @@ function SectionCarousel({
   );
 }
 
-const topicChips = [
-  'Self Improvement',
-  'Business',
-  'Motivation & Inspiration',
-  'Biographies',
-  'Productivity',
-  'Students',
-  'Science',
-  'Communication Skills',
-  'Trending',
-  'For You',
-  'Newly Added',
-  'Premium Book Summaries',
-  'Business Secrets',
-  'Indian Personalities',
-  '21 Days Challenge',
-  'Free Summaries',
-  'Most Famous Books',
-  'Positive Mindset',
-  'Investment',
-  '75 Days Challenge',
-];
+// Removing hardcoded topicChips - will be fetched from API
 
 export default function MediaContentDesktop() {
   const [books, setBooks] = useState<Book[]>([]);
   const [freeSummaries, setFreeSummaries] = useState<Book[]>([]);
   const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
   const [premiumSummaries, setPremiumSummaries] = useState<Book[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingFreeSummaries, setIsLoadingFreeSummaries] = useState(true);
   const [isLoadingTrendingBooks, setIsLoadingTrendingBooks] = useState(true);
   const [isLoadingPremiumSummaries, setIsLoadingPremiumSummaries] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   // Fetch all data from APIs
   useEffect(() => {
@@ -316,6 +298,19 @@ export default function MediaContentDesktop() {
         console.error('Error fetching premium summaries:', err);
       } finally {
         setIsLoadingPremiumSummaries(false);
+      }
+
+      // Categories
+      try {
+        setIsLoadingCategories(true);
+        const res = await categoriesApi.getActive();
+        if (res.success && res.data) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      } finally {
+        setIsLoadingCategories(false);
       }
     };
 
@@ -415,17 +410,26 @@ export default function MediaContentDesktop() {
 
             <div className='lg:col-span-9'>
               <div className='flex flex-wrap gap-3'>
-                {topicChips.map((label) => (
-                  <button
-                    key={label}
-                    type='button'
-                    onClick={() => (window.location.href = `/books?search=${encodeURIComponent(label)}`)}
-                    className='inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-700 text-sm hover:bg-white transition-colors'
-                  >
-                    <BookOpenIcon className='w-4 h-4 text-slate-400' />
-                    <span className='truncate max-w-[220px]'>{label}</span>
-                  </button>
-                ))}
+                {isLoadingCategories ? (
+                  Array.from({ length: 12 }, (_, i) => (
+                    <div
+                      key={`cat-skeleton-${i}`}
+                      className='h-10 w-32 bg-slate-200 animate-pulse rounded-lg'
+                    />
+                  ))
+                ) : (
+                  categories.map((category) => (
+                    <button
+                      key={category._id || category.id}
+                      type='button'
+                      onClick={() => (window.location.href = `/books?category=${encodeURIComponent(category.name)}`)}
+                      className='inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-700 text-sm hover:bg-white transition-colors'
+                    >
+                      <BookOpenIcon className='w-4 h-4 text-slate-400' />
+                      <span className='truncate max-w-[220px]'>{category.name}</span>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>
