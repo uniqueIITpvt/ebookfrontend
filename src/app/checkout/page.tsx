@@ -64,7 +64,10 @@ function CheckoutContent() {
     setSubmitting(true);
     try {
       const priceVal = parseFloat(book.price.replace('$', ''));
-      const totalAmount = priceVal * qty;
+      const subtotal = priceVal * qty;
+      const gstPercentage = book.gst || 0;
+      const gstAmount = subtotal * (gstPercentage / 100);
+      const totalAmount = subtotal + gstAmount;
 
       const response = await fetch('/api/v1/orders/create', {
         method: 'POST',
@@ -74,6 +77,7 @@ function CheckoutContent() {
           title: book.title,
           price: priceVal,
           quantity: qty,
+          gst: gstPercentage,
           totalAmount: totalAmount,
           type: 'buy_now',
           customerName: formData.name,
@@ -138,7 +142,10 @@ function CheckoutContent() {
   }
 
   const priceVal = parseFloat(book!.price.replace('$', ''));
-  const totalAmount = priceVal * qty;
+  const subtotal = priceVal * qty;
+  const gstPercentage = book!.gst || 0;
+  const gstAmount = subtotal * (gstPercentage / 100);
+  const totalAmount = subtotal + gstAmount;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-dm-sans py-12 px-4 sm:px-6 lg:px-8">
@@ -257,6 +264,12 @@ function CheckoutContent() {
                     <span>Quantity</span>
                     <span>x{qty}</span>
                   </div>
+                  {gstPercentage > 0 && (
+                    <div className="flex justify-between text-gray-400">
+                      <span>GST ({gstPercentage}%)</span>
+                      <span>${gstAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-gray-400">
                     <span>Service Fee</span>
                     <span>$0.00</span>
