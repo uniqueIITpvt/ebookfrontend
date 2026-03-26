@@ -19,25 +19,29 @@ export default function MediaContent() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    // Remove artificial delay - load instantly
-    setIsLoading(false);
+    // Initial load state
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
 
     return () => {
       window.removeEventListener('resize', checkMobile);
+      clearTimeout(timer);
     };
   }, []);
 
-  // Skip loading state for instant rendering
   if (isLoading) {
     return (
-      <section className='pt-8 pb-12 bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 relative overflow-hidden'>
-        {/* Simple skeleton instead of spinner */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-slate-200 animate-pulse rounded-xl h-64"></div>
-            ))}
+      <section className='py-20 bg-white relative flex items-center justify-center min-h-[400px] overflow-hidden'>
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500 rounded-full blur-[100px] animate-pulse"></div>
+        </div>
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="w-16 h-16 relative">
+            <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
+          <p className="mt-8 text-slate-400 font-syne text-xs uppercase tracking-[0.4em] animate-pulse">Initializing Collection</p>
         </div>
       </section>
     );

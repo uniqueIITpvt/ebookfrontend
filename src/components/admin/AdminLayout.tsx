@@ -45,6 +45,7 @@ import {
   Stars,
   Headphones,
   Campaign,
+  ShoppingBag,
 } from '@mui/icons-material';
 import { useThemeMode } from './MuiThemeProvider';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,6 +57,7 @@ const navigation = [
   { name: 'Audiobooks', href: '/admin/audiobooks', icon: Headphones },
   { name: 'Blogs', href: '/admin/blogs', icon: Article },
   { name: 'Banners', href: '/admin/banners', icon: Campaign },
+  { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { name: 'Users', href: '/admin/users', icon: People },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
