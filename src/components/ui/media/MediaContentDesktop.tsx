@@ -87,29 +87,33 @@ function BookCard({ book, index, href, subLabel }: BookCardProps) {
           )}
 
           <div className='absolute top-2.5 left-2.5 z-10'>
-            <span className='bg-white/80 backdrop-blur-md text-slate-900 px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase border border-black/5 shadow-sm font-dm-sans'>
+            <span className='bg-white/90 backdrop-blur-md text-slate-900 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest uppercase border border-black/5 shadow-premium font-dm-sans'>
               {book.category}
             </span>
           </div>
         </div>
 
-        <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 z-[3] flex flex-col justify-end'>
-          <div className='p-5 text-white transform translate-y-10 group-hover:translate-y-0 transition-transform duration-500 ease-out'>
-            <h3 className='text-base font-syne font-bold mb-1 leading-tight line-clamp-2'>{book.title}</h3>
-            <p className='text-[10px] font-dm-sans text-white/70 mb-3 leading-relaxed line-clamp-2'>{book.description}</p>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='text-[10px] font-bold text-white truncate max-w-[60%]'>{book.author}</div>
-              <div className='text-[9px] text-white/50 font-medium'>{book.pages ? `${book.pages} pp` : subLabel || book.type}</div>
+        <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 z-[3] flex flex-col justify-end'>
+          <div className='p-6 text-white transform translate-y-10 group-hover:translate-y-0 transition-transform duration-700 cubic-bezier(0.16, 1, 0.3, 1)'>
+            <div className='mb-2 flex items-center gap-1.5'>
+              <div className='h-px w-4 bg-indigo-400'></div>
+              <span className='text-[8px] font-bold uppercase tracking-widest text-indigo-400'>{subLabel || 'New Release'}</span>
+            </div>
+            <h3 className='text-lg font-syne font-bold mb-1.5 leading-tight line-clamp-2 tracking-tight'>{book.title}</h3>
+            <p className='text-[11px] font-dm-sans text-white/70 mb-4 leading-relaxed line-clamp-2'>{book.description}</p>
+            <div className='flex items-center justify-between mb-6'>
+              <div className='text-[11px] font-bold truncate max-w-[60%] text-white/90'>{book.author}</div>
+              <div className='text-[10px] text-white/40 font-medium bg-white/5 px-2 py-0.5 rounded-full'>{book.pages ? `${book.pages} pp` : book.type}</div>
             </div>
             <Link href={href} className='block'>
-              <button className='w-full py-2 bg-white text-black text-[11px] font-bold rounded-lg transition-transform hover:scale-105 active:scale-95 font-dm-sans'>
-                Read Summary
+              <button className='w-full py-3 bg-white text-black text-[12px] font-bold rounded-xl transition-all hover:bg-black hover:text-white active:scale-95 font-dm-sans shadow-lg'>
+                Explore Now
               </button>
             </Link>
           </div>
         </div>
       </div>
-      <div className='absolute -inset-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-sm -z-10' />
+      <div className='absolute -inset-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-md -z-10' />
     </div>
   );
 }
@@ -215,35 +219,29 @@ export default function MediaContentDesktop() {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        setIsLoadingBooks(true);
-        const response = await fetch(`${API_URL}/books`);
-        const data = await response.json();
-        if (data.success && data.data) setBooks(data.data);
-      } catch (err) { console.error(err); } finally { setIsLoadingBooks(false); }
+        const [booksRes, freeRes, trendingRes, premiumRes, catsRes] = await Promise.all([
+          fetch(`${API_URL}/books`).then(r => r.json()),
+          booksApi.getBooksByComponentType('free-summaries', 20),
+          booksApi.getBooksByComponentType('trending-books', 20),
+          booksApi.getBooksByComponentType('premium-summaries', 20),
+          categoriesApi.getActive()
+        ]);
 
-      try {
-        setIsLoadingFreeSummaries(true);
-        const res = await booksApi.getBooksByComponentType('free-summaries', 20);
-        setFreeSummaries(res.data);
-      } catch (err) { console.error(err); } finally { setIsLoadingFreeSummaries(false); }
+        if (booksRes.success && booksRes.data) setBooks(booksRes.data);
+        setFreeSummaries(freeRes.data);
+        setTrendingBooks(trendingRes.data);
+        setPremiumSummaries(premiumRes.data);
+        if (catsRes.success && catsRes.data) setCategories(catsRes.data);
 
-      try {
-        setIsLoadingTrendingBooks(true);
-        const res = await booksApi.getBooksByComponentType('trending-books', 20);
-        setTrendingBooks(res.data);
-      } catch (err) { console.error(err); } finally { setIsLoadingTrendingBooks(false); }
-
-      try {
-        setIsLoadingPremiumSummaries(true);
-        const res = await booksApi.getBooksByComponentType('premium-summaries', 20);
-        setPremiumSummaries(res.data);
-      } catch (err) { console.error(err); } finally { setIsLoadingPremiumSummaries(false); }
-
-      try {
-        setIsLoadingCategories(true);
-        const res = await categoriesApi.getActive();
-        if (res.success && res.data) setCategories(res.data);
-      } catch (err) { console.error(err); } finally { setIsLoadingCategories(false); }
+      } catch (err) {
+        console.error('Error fetching landing page data:', err);
+      } finally {
+        setIsLoadingBooks(false);
+        setIsLoadingFreeSummaries(false);
+        setIsLoadingTrendingBooks(false);
+        setIsLoadingPremiumSummaries(false);
+        setIsLoadingCategories(false);
+      }
     };
     fetchAllData();
   }, []);
@@ -260,7 +258,9 @@ export default function MediaContentDesktop() {
 
         <div className='max-w-7xl mx-auto px-8 relative z-10'>
           <SectionCarousel title='New Releases Books' seeMoreHref='/books' isLoading={isLoadingBooks} items={books} emptyMsg='No books available' sectionKey='books' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} />
-          <SectionCarousel title='Free Summaries' seeMoreHref='/free' isLoading={isLoadingFreeSummaries} items={freeSummaries} emptyMsg='No free summaries' sectionKey='free' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Free' />
+          <div id="free-summaries-section">
+            <SectionCarousel title='Free Summaries' seeMoreHref='/free' isLoading={isLoadingFreeSummaries} items={freeSummaries} emptyMsg='No free summaries' sectionKey='free' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Free' />
+          </div>
           <SectionCarousel title='Trending Books' seeMoreHref='/trending' isLoading={isLoadingTrendingBooks} items={trendingBooks} emptyMsg='No trending books' sectionKey='trending' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Trending' />
           <SectionCarousel title='Premium Content' seeMoreHref='/premium' isLoading={isLoadingPremiumSummaries} items={premiumSummaries} emptyMsg='No premium content' sectionKey='premium' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Premium' />
 
@@ -279,7 +279,13 @@ export default function MediaContentDesktop() {
                     <div className='text-[24px] font-bold text-[#00E5BC] tracking-[0.2em] leading-none mb-1'>DAYS</div>
                     <div className='text-[10px] font-medium text-white/30 tracking-[0.4em] uppercase'>Challenge</div>
                   </div>
-                  <button onClick={() => window.location.href = '/books'} className='group relative flex items-center gap-2 px-7 py-3 bg-white text-black text-[12px] font-bold rounded-full transition-all hover:scale-105 hover:shadow-xl font-dm-sans'>
+                  <button 
+                    onClick={() => {
+                      const element = document.getElementById('free-summaries-section');
+                      element?.scrollIntoView({ behavior: 'smooth' });
+                    }} 
+                    className='group relative flex items-center gap-2 px-7 py-3 bg-white text-black text-[12px] font-bold rounded-full transition-all hover:scale-105 hover:shadow-xl font-dm-sans'
+                  >
                     <span>Start Now</span>
                     <ChevronRightIcon className='w-3.5 h-3.5 transition-transform group-hover:translate-x-1' />
                   </button>

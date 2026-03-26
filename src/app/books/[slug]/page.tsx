@@ -19,33 +19,10 @@ import Image from 'next/image';
 import { generateBookSlug } from '@/utils/slugify';
 
 import { API_CONFIG } from '@/config/api';
+import { booksApi, type Book } from '@/services/api/booksApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
-interface Book {
-  id: number;
-  title: string;
-  subtitle: string;
-  author: string;
-  description: string;
-  category: string;
-  type: 'Books' | 'Audiobook';
-  price: string;
-  originalPrice: string;
-  rating: number;
-  reviews: number;
-  pages?: number;
-  duration?: string;
-  narrator?: string;
-  publishDate: string;
-  isbn: string;
-  format: string[];
-  image: string;
-  featured: boolean;
-  bestseller: boolean;
-  tags: string[];
-  slug?: string;
-}
 
 interface BookSlugPageProps {
   params: Promise<{
@@ -62,6 +39,8 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
   const [book, setBook] = useState<Book | null>(null);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRating, setUserRating] = useState<number>(0);
+  const [cartFeedback, setCartFeedback] = useState<string | null>(null);
 
   // Unwrap params Promise
   const resolvedParams = use(params);
@@ -139,6 +118,73 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
     }
   };
 
+  const handleAddToCart = async () => {
+    if (!book) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/orders/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookId: book.id,
+          title: book.title,
+          price: parseFloat(book.price.replace('$', '')),
+          quantity: quantity,
+          totalAmount: parseFloat(book.price.replace('$', '')) * quantity,
+          type: 'cart',
+          customerName: 'Demo User', // In production, get from auth context
+          customerEmail: 'demo@example.com'
+        })
+      });
+
+      if (response.ok) {
+        setCartFeedback('Item saved to database cart!');
+        setTimeout(() => setCartFeedback(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error adding to database cart:', error);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!book) return;
+    const bookId = book.id || (book as any)._id;
+    if (!bookId) return;
+
+    // Redirect to checkout with book ID and current quantity
+    router.push(`/checkout?id=${bookId}&qty=${quantity}`);
+  };
+
+  const handleRatingClick = async (newRating: number) => {
+    if (!book) return;
+    const bookId = book.id || (book as any)._id;
+    if (!bookId) return;
+
+    // Optimistic update
+    setUserRating(newRating);
+
+    try {
+      console.log(`Submitting rating ${newRating} for book ${bookId}`);
+      const response = await booksApi.updateRating(bookId, newRating);
+      
+      console.log('Rating update response:', response);
+      
+      if (response.success) {
+        // Refresh book data with the actual calculated average from backend
+        setBook(response.data);
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      // Revert optmistic update or show error to user
+    }
+  };
+
+  const calculateTotalPrice = () => {
+    if (!book) return '';
+    const unitPrice = parseFloat(book.price.replace('$', ''));
+    return `$${(unitPrice * quantity).toFixed(2)}`;
+  };
+
   const relatedBooks = allBooks
     .filter(b => b.id !== book.id && (b.category === book.category || b.tags.some(tag => book.tags.includes(tag))))
     .slice(0, 4);
@@ -163,13 +209,13 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left Column - Book Image */}
           <div className="space-y-6">
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-xl">
+            <div className="relative h-[400px] lg:h-[480px] w-full max-w-[380px] mx-auto rounded-2xl overflow-hidden bg-white shadow-xl border border-gray-100">
               {book.image ? (
                 <Image
                   src={book.image}
                   alt={book.title}
                   fill
-                  className="object-cover"
+                  className="object-contain p-4"
                   priority
                 />
               ) : (
@@ -241,22 +287,28 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
 
             {/* Rating & Reviews */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 group">
                 {[...Array(5)].map((_, i) => (
-                  i < Math.floor(book.rating) ? (
-                    <SolidStarIcon key={i} className="w-5 h-5 text-yellow-400" />
-                  ) : (
-                    <StarIcon key={i} className="w-5 h-5 text-gray-300" />
-                  )
+                  <button
+                    key={i}
+                    onClick={() => handleRatingClick(i + 1)}
+                    className="transition-transform active:scale-90"
+                  >
+                    {i < (userRating || Math.floor(book.rating)) ? (
+                      <SolidStarIcon className="w-6 h-6 text-yellow-500" />
+                    ) : (
+                      <StarIcon className="w-6 h-6 text-gray-300 hover:text-yellow-200 transition-colors" />
+                    )}
+                  </button>
                 ))}
               </div>
-              <span className="font-semibold text-gray-900">{book.rating}</span>
-              <span className="text-gray-500">({book.reviews} reviews)</span>
+              <span className="font-syne font-bold text-gray-900 text-lg">{userRating || book.rating}</span>
+              <span className="text-gray-400 font-medium font-dm-sans">({book.reviews + (userRating ? 1 : 0)} reviews)</span>
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-bold text-gray-900">{book.price}</span>
+            <div className="flex items-baseline gap-3 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+              <span className="text-4xl font-bold text-slate-900 font-syne">{calculateTotalPrice()}</span>
               {book.originalPrice && (
                 <span className="text-xl text-gray-400 line-through">{book.originalPrice}</span>
               )}
@@ -312,14 +364,27 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
             </div>
 
             {/* Add to Cart Button */}
-            <div className="flex gap-3">
-              <button className="flex-1 bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                <ShoppingCartIcon className="w-6 h-6" />
-                Add to Cart
-              </button>
-              <button className="px-6 py-4 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
-                Buy Now
-              </button>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-4">
+                <button 
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-[15px] hover:bg-slate-800 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-xl shadow-slate-200 font-syne"
+                >
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  Add to Cart
+                </button>
+                <button 
+                  onClick={handleBuyNow}
+                  className="flex-1 px-8 py-4 border-2 border-slate-900 text-slate-900 rounded-2xl font-bold text-[15px] hover:bg-slate-50 transition-all active:scale-[0.98] font-syne"
+                >
+                  Buy Now
+                </button>
+              </div>
+              {cartFeedback && (
+                <div className="text-center font-bold text-emerald-600 bg-emerald-50 py-2 rounded-xl border border-emerald-100 animate-fade-in text-sm">
+                  ✓ {cartFeedback}
+                </div>
+              )}
             </div>
 
             {/* Book Info */}
@@ -434,13 +499,13 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
                   className="group"
                 >
                   <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <div className="relative aspect-[3/4]">
+                    <div className="relative aspect-[4/5] bg-gray-50">
                       {relatedBook.image ? (
                         <Image
                           src={relatedBook.image}
                           alt={relatedBook.title}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gray-100">

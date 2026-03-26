@@ -419,7 +419,7 @@ export default function MediaContentMobile() {
         </div>
 
         {/* Free Summaries Section */}
-        <div className='mb-8'>
+        <div id="free-summaries-section-mobile" className='mb-8'>
           <div className='flex items-center justify-between mb-6'>
             <div className='flex-1'>
               <h3 className='text-lg font-bold text-slate-900 mb-2 flex items-center'>
@@ -823,7 +823,10 @@ export default function MediaContentMobile() {
               <div className='text-[8px] font-medium text-white/30 tracking-[0.4em] uppercase'>Challenge</div>
             </div>
             <button
-              onClick={() => window.location.href = '/books'}
+              onClick={() => {
+                const element = document.getElementById('free-summaries-section-mobile');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className='group relative flex items-center gap-2 px-6 py-2.5 bg-white text-black text-[11px] font-bold rounded-full transition-all active:scale-95 font-dm-sans shadow-lg'
             >
               <span>Start Now</span>

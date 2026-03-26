@@ -43,6 +43,7 @@ export interface Book {
   bestseller: boolean;
   tags: string[];
   status: 'draft' | 'review' | 'published' | 'archived';
+  gst?: number;
   slug?: string;
   views?: number;
   downloads?: number;
@@ -99,6 +100,7 @@ export interface BookPayload {
   narrator?: string;
   publishDate: string;
   isbn?: string;
+  gst?: number;
   format: string[];
   image?: string;
   featured: boolean;
@@ -434,6 +436,14 @@ class BooksApiService {
       tags: book.tags,
       status: book.status,
     };
+  }
+
+  // Update book rating
+  async updateRating(id: string, rating: number): Promise<ApiResponse<Book>> {
+    return this.fetchWithErrorHandling<ApiResponse<Book>>(`/books-rate/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ rating }),
+    });
   }
 }
 

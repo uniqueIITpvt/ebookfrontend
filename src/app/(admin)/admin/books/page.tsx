@@ -67,13 +67,14 @@ import { categoriesApi, type Category } from '@/services/api/categoriesApi';
 import { bookTypesApi, type BookType } from '@/services/api/bookTypesApi';
 import { bookHubsApi, type BookHub } from '@/services/api/bookHubsApi';
 import { bookStatusesApi, type BookStatus } from '@/services/api/bookStatusesApi';
+import { gstApi, type GstRecord } from '@/services/api/gstApi';
 import { ImageIcon } from 'lucide-react';
 
 // Form data interface for admin operations
 interface BookFormData extends Omit<BookPayload, 'price' | 'originalPrice' | 'tags'> {
   _id?: string;
   id?: string;
-  price: number; // Form uses numbers
+  discountPrice: number; // Form uses numbers
   originalPrice?: number;
   sales?: number;
   createdAt?: string;
@@ -85,6 +86,7 @@ interface BookFormData extends Omit<BookPayload, 'price' | 'originalPrice' | 'ta
   // Override fields to make them optional for form
   tags?: string[]; // Optional in form, will default to empty array
   componentType?: 'none' | 'free-summaries' | 'trending-books' | 'premium-summaries';
+  gst?: number;
 }
 
 interface ValidationErrors {
@@ -92,7 +94,7 @@ interface ValidationErrors {
   author?: string;
   category?: string;
   description?: string;
-  price?: string;
+  discountPrice?: string;
   pages?: string;
   isbn?: string;
   publishDate?: string;
@@ -146,6 +148,9 @@ export default function BooksPage() {
   const [bookTypeDialogOpen, setBookTypeDialogOpen] = useState(false);
   const [bookHubDialogOpen, setBookHubDialogOpen] = useState(false);
   const [bookStatusDialogOpen, setBookStatusDialogOpen] = useState(false);
+const [gstDialogOpen, setGstDialogOpen] = useState(false);
+const [gstList, setGstList] = useState<GstRecord[]>([]);
+const [newGstData, setNewGstData] = useState({ percentage: 0 });
   const [newCategoryData, setNewCategoryData] = useState({ name: '', description: '', color: '#1976d2' });
   const [newBookTypeData, setNewBookTypeData] = useState({ name: '', description: '', color: '#1976d2' });
   const [newBookHubData, setNewBookHubData] = useState({ name: '', value: '', description: '', color: '#9c27b0' });
@@ -284,6 +289,16 @@ export default function BooksPage() {
         console.warn('Book Statuses API not available, using default statuses');
       }
 
+      // Try to load GST list
+      try {
+        const gstResponse = await gstApi.getAll();
+        if (gstResponse.success && gstResponse.data) {
+          setGstList(gstResponse.data);
+        }
+      } catch (error) {
+        console.warn('GST API not available');
+      }
+
       // Try to load books
       let booksData: Book[] = [];
       try {
@@ -415,16 +430,16 @@ export default function BooksPage() {
     }
 
     // Price validation
-    if (book.price === undefined || book.price === null) {
-      errors.price = 'Price is required';
+    if (book.discountPrice === undefined || book.discountPrice === null) {
+      errors.discountPrice = 'Price is required';
     } else {
-      const priceValue = typeof book.price === 'string' ? parseFloat(book.price) : book.price;
+      const priceValue = typeof book.discountPrice === 'string' ? parseFloat(book.discountPrice) : book.discountPrice;
       if (isNaN(priceValue)) {
-        errors.price = 'Price must be a valid number';
+        errors.discountPrice = 'Price must be a valid number';
       } else if (priceValue < 0) {
-        errors.price = 'Price cannot be negative';
+        errors.discountPrice = 'Price cannot be negative';
       } else if (priceValue > 10000) { 
-        errors.price = 'Price seems too high (max $10,000)';
+        errors.discountPrice = 'Price seems too high (max $10,000)';
       }
     }
 
@@ -646,7 +661,7 @@ export default function BooksPage() {
       const formData: Partial<BookFormData> = {
         ...book,
         _id: (book as any)._id || book.id,
-        price: typeof book.price === 'string' ? parseFloat(book.price.replace(/[^0-9.]/g, '')) || 0 : book.price,
+        discountPrice: typeof book.price === 'string' ? parseFloat(book.price.replace(/[^0-9.]/g, '')) || 0 : book.price,
         originalPrice: book.originalPrice ? (typeof book.originalPrice === 'string' ? parseFloat(book.originalPrice.replace(/[^0-9.]/g, '')) : book.originalPrice) : undefined,
         sales: book.sales || 0, // Ensure sales is properly set
         coverImage: book.image || (book as any).coverImage,
@@ -674,7 +689,7 @@ export default function BooksPage() {
         status: 'draft',
         featured: false,
         bestseller: false,
-        price: 0,
+        discountPrice: 0,
         description: '',
         pages: 0,
         format: ['E-book'], // Default format to prevent validation errors
@@ -782,7 +797,7 @@ export default function BooksPage() {
         description: selectedBook.description?.trim() || '',
         type: isAudiobook ? 'Audiobook' : (selectedBook.type || 'Books'),
         componentType: selectedBook.componentType || 'none',
-        price: Number(selectedBook.price) || 0,
+        price: Number(selectedBook.discountPrice) || 0,
         format: normalizedFormat, // Default to E-book if no format specified; ensure Audiobook format matches type
         featured: selectedBook.featured || false,
         bestseller: selectedBook.bestseller || false,
@@ -798,7 +813,8 @@ export default function BooksPage() {
         narrator: selectedBook.narrator,
         // Only include image if no new image file is being uploaded
         image: imageFile ? undefined : (selectedBook.coverImage || selectedBook.image),
-        subtitle: selectedBook.subtitle
+        subtitle: selectedBook.subtitle,
+        gst: selectedBook.gst
       };
       
       // Collect files for upload
@@ -1187,7 +1203,31 @@ export default function BooksPage() {
     }
   };
 
-  return <Box>
+  // Handler for creating new GST percentage
+  const handleCreateGst = async () => {
+    if (newGstData.percentage === undefined || newGstData.percentage === null) {
+      showErrorAlert('GST percentage is required');
+      return;
+    }
+
+    try {
+      const response = await gstApi.create(newGstData.percentage);
+
+      if (response.success) {
+        setGstList(prev => [...prev, response.data].sort((a, b) => a.percentage - b.percentage));
+        setSelectedBook({ ...selectedBook, gst: response.data.percentage });
+        setNewGstData({ percentage: 0 });
+        setGstDialogOpen(false);
+        showSuccessAlert(`${response.data.percentage}% GST added successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error creating GST:', error);
+      showErrorAlert('Failed to create GST', error.message || 'Please try again');
+    }
+  };
+
+  return (
+    <Box>
       {/* API Status Banner */}
       {!apiAvailable && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -1548,14 +1588,12 @@ export default function BooksPage() {
                     />
                   </Box>
 
-                  {book.rating && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Star sx={{ color: 'warning.main', fontSize: 16 }} />
-                      <Typography variant="body2">
-                        {book.rating} ({book.reviews || 0} reviews)
-                      </Typography>
-                    </Box>
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Star sx={{ color: 'warning.main', fontSize: 16 }} />
+                    <Typography variant="body2">
+                      {book.rating !== undefined ? book.rating : 0} ({book.reviews || 0} reviews)
+                    </Typography>
+                  </Box>
 
                   <Typography variant="h6" color="primary.main" gutterBottom>
                     {book.price}
@@ -1852,20 +1890,20 @@ export default function BooksPage() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Price"
+                label="Discount Price"
                 type="number"
-                value={selectedBook?.price || ''}
+                value={selectedBook?.discountPrice || ''}
                 onChange={(e) => {
                   const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                  setSelectedBook({...selectedBook, price: value});
-                  if (validationErrors.price) {
-                    setValidationErrors({...validationErrors, price: undefined});
+                  setSelectedBook({...selectedBook, discountPrice: value});
+                  if (validationErrors.discountPrice) {
+                    setValidationErrors({...validationErrors, discountPrice: undefined});
                   }
                 }}
                 disabled={dialogMode === 'view'}
                 InputProps={{ startAdornment: '$' }}
-                error={!!validationErrors.price}
-                helperText={validationErrors.price}
+                error={!!validationErrors.discountPrice}
+                helperText={validationErrors.discountPrice}
                 required
               />
             </Grid>
@@ -1883,6 +1921,46 @@ export default function BooksPage() {
                 InputProps={{ startAdornment: '$' }}
                 helperText="For discount calculations (optional)"
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel>GST Percentage (%)</InputLabel>
+                  <Select
+                    value={selectedBook?.gst || 0}
+                    label="GST Percentage (%)"
+                    onChange={(e) => setSelectedBook({ ...selectedBook, gst: e.target.value as number })}
+                    disabled={dialogMode === 'view'}
+                  >
+                    <MenuItem value={0}>No GST (0%)</MenuItem>
+                    {gstList.map((gst) => (
+                      <MenuItem key={gst._id} value={gst.percentage}>
+                        {gst.percentage}% GST
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add New GST %">
+                  <IconButton
+                    onClick={() => setGstDialogOpen(true)}
+                    disabled={dialogMode === 'view'}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'info.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'info.dark',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500'
+                      }
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -3355,5 +3433,49 @@ export default function BooksPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>;
+      {/* GST Creation Dialog */}
+      <Dialog
+        open={gstDialogOpen}
+        onClose={() => setGstDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Add New GST Percentage</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="GST Percentage (%)"
+              type="number"
+              value={newGstData.percentage}
+              onChange={(e) => {
+                const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                setNewGstData({ percentage: val });
+              }}
+              sx={{ mb: 2 }}
+              required
+              autoFocus
+              placeholder="e.g., 18"
+              InputProps={{
+                endAdornment: <Typography variant="body2" color="text.secondary">%</Typography>,
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              This will create a new GST tax bracket that can be applied to books.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setGstDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateGst}
+            variant="contained"
+            disabled={newGstData.percentage < 0}
+          >
+            Add GST %
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
 }
