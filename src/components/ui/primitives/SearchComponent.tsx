@@ -39,74 +39,9 @@ interface SearchResult {
   url?: string;
 }
 
-// Sample search data
-const searchData: SearchResult[] = [
-  // Books
-  {
-    id: 'book-1',
-    title: 'Public Speaking Mastery',
-    description: 'Overcome anxiety and master the art of confident public speaking with proven strategies.',
-    type: 'book',
-    image: '/books/Blue & Orange Playful Illustrative Public Speaking Book Cover.jpg',
-    author: 'UniqueIIT Research Center',
-    category: 'Self-Help',
-    url: '/books/public-speaking-mastery',
-  },
-  {
-    id: 'book-2',
-    title: 'Mind Matters: Mental Wellness',
-    description: 'Essential guide to maintaining productivity and building resilience in daily life.',
-    type: 'book',
-    image: '/books/Navy and Pink Illustrated Mind Matters Book Cover.jpg',
-    author: 'UniqueIIT Research Center',
-    category: 'Self-Help',
-    url: '/books/mind-matters',
-  },
-  {
-    id: 'book-3',
-    title: 'Modern Psychology Insights',
-    description: 'Comprehensive guide to understanding modern psychological approaches and therapeutic techniques.',
-    type: 'book',
-    image: '/books/Black and White Modern Psychology Book Cover.jpg',
-    author: 'UniqueIIT Research Center',
-    category: 'Psychology',
-    url: '/books/modern-psychology',
-  },
+import { booksApi } from '@/services/api/booksApi';
+import { categoriesApi, Category } from '@/services/api/categoriesApi';
 
-  // Topics/Categories
-  {
-    id: 'topic-1',
-    title: 'Anxiety Disorders',
-    description: 'Comprehensive resources about anxiety disorders, symptoms, and treatment options.',
-    type: 'topic',
-    category: 'Self-Help',
-    url: '/treatment/anxiety',
-  },
-  {
-    id: 'topic-2',
-    title: 'Depression Treatment',
-    description: 'Evidence-based approaches to treating depression and mood disorders.',
-    type: 'topic',
-    category: 'Treatment',
-    url: '/treatment/depression',
-  },
-  {
-    id: 'topic-3',
-    title: 'Stress Management',
-    description: 'Effective techniques and strategies for managing stress in daily life.',
-    type: 'topic',
-    category: 'Wellness',
-    url: '/treatment/stress',
-  },
-  {
-    id: 'topic-4',
-    title: 'Couples Therapy',
-    description: 'Relationship counseling and therapy for couples facing challenges.',
-    type: 'topic',
-    category: 'Therapy',
-    url: '/treatment/couples',
-  },
-];
 
 interface SearchComponentProps {
   isOpen: boolean;
@@ -126,35 +61,89 @@ export default function SearchComponent({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [popularTopics, setPopularTopics] = useState<Category[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch popular topics (categories) on mount
+  useEffect(() => {
+    const fetchPopularTopics = async () => {
+      try {
+        const response = await categoriesApi.getActive();
+        if (response.success) {
+          setPopularTopics(response.data.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Error fetching popular topics:', error);
+      }
+    };
+
+    fetchPopularTopics();
+  }, []);
+
+
   // Handle search functionality
   useEffect(() => {
-    if (searchTerm.trim()) {
-      setIsLoading(true);
-      // Simulate API delay
-      const timer = setTimeout(() => {
-        const filtered = searchData.filter((item) => {
-          const matchesSearch = 
-            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.author?.toLowerCase().includes(searchTerm.toLowerCase());
-          
-          const matchesType = selectedType === 'all' || item.type === selectedType;
-          
-          return matchesSearch && matchesType;
-        });
-        setResults(filtered);
-        setIsLoading(false);
-      }, 300);
+    const performSearch = async () => {
+      if (!searchTerm.trim()) {
+        setResults([]);
+        return;
+      }
 
-      return () => clearTimeout(timer);
-    } else {
-      setResults([]);
-    }
+      setIsLoading(true);
+      try {
+        let finalResults: SearchResult[] = [];
+
+        // Search Books
+        if (selectedType === 'all' || selectedType === 'book') {
+          const bookResponse = await booksApi.searchBooks({ q: searchTerm, limit: 10 });
+          if (bookResponse.success && bookResponse.data) {
+            const bookResults: SearchResult[] = bookResponse.data.map((book) => ({
+              id: book.id,
+              title: book.title,
+              description: book.description,
+              type: 'book',
+              image: book.image,
+              author: book.author,
+              category: book.category,
+              url: `/books/${book.slug || book.id}`,
+            }));
+            finalResults = [...finalResults, ...bookResults];
+          }
+        }
+
+        // Search Topics (Categories)
+        if (selectedType === 'all' || selectedType === 'topic') {
+          const categoryResponse = await categoriesApi.getAll();
+          if (categoryResponse.success && categoryResponse.data) {
+            const matchingCategories = categoryResponse.data.filter(
+              (cat) =>
+                cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            const topicResults: SearchResult[] = matchingCategories.map((cat) => ({
+              id: cat.id,
+              title: cat.name,
+              description: cat.description || '',
+              type: 'topic',
+              url: `/books?category=${cat.slug || cat.name}`,
+            }));
+            finalResults = [...finalResults, ...topicResults];
+          }
+        }
+
+        setResults(finalResults);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const timer = setTimeout(performSearch, 300);
+    return () => clearTimeout(timer);
   }, [searchTerm, selectedType]);
+
 
   // Handle click outside
   useEffect(() => {
@@ -342,17 +331,34 @@ export default function SearchComponent({
                     Popular Topics
                   </h3>
                   <div className='grid grid-cols-1 gap-2'>
-                    {['Anxiety Treatment', 'Depression Help', 'Stress Management', 'Couples Therapy'].map((topic) => (
-                      <button
-                        key={topic}
-                        onClick={() => handleSearch(topic)}
-                        className='flex items-center p-2 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors'
-                      >
-                        <FireIcon className='w-4 h-4 mr-2 text-orange-500 flex-shrink-0' />
-                        <span className='truncate'>{topic}</span>
-                      </button>
-                    ))}
+                    {popularTopics.length > 0 ? (
+                      popularTopics.map((topic) => (
+                        <button
+                          key={topic.id}
+                          onClick={() => {
+                            window.location.href = `/books?category=${topic.slug || topic.name}`;
+                            onClose();
+                          }}
+                          className='flex items-center p-2 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors'
+                        >
+                          <FireIcon className='w-4 h-4 mr-2 text-orange-500 flex-shrink-0' />
+                          <span className='truncate'>{topic.name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      ['Anxiety Treatment', 'Depression Help', 'Stress Management', 'Couples Therapy'].map((topic) => (
+                        <button
+                          key={topic}
+                          onClick={() => handleSearch(topic)}
+                          className='flex items-center p-2 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors'
+                        >
+                          <FireIcon className='w-4 h-4 mr-2 text-orange-500 flex-shrink-0' />
+                          <span className='truncate'>{topic}</span>
+                        </button>
+                      ))
+                    )}
                   </div>
+
                 </>
               )}
             </div>
@@ -456,10 +462,11 @@ export default function SearchComponent({
               fullWidth
               rightIcon={<ChevronRightIcon className='w-4 h-4' />}
               onClick={() => {
-                window.location.href = `/search?q=${encodeURIComponent(searchTerm)}`;
+                window.location.href = `/books?search=${encodeURIComponent(searchTerm)}`;
                 onClose();
               }}
             >
+
               <span className='hidden sm:inline'>View All Results ({results.length})</span>
               <span className='sm:hidden'>All Results ({results.length})</span>
             </Button>
