@@ -8,7 +8,9 @@ import TrustedBy from "@/components/ui/sections/TrustedBy";
 
 export default function Home() {
   return (
-    <div className='min-h-screen'>
+    <div className='min-h-screen pt-32 transition-all duration-300'>
+
+
       <div id='hero'>
         <Hero/>
       </div>

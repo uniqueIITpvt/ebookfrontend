@@ -70,11 +70,16 @@ export default function AdminDashboard() {
     try {
       setIsLoading(true);
 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+
       // Fetch all stats in parallel
       const [booksRes, blogsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/books/stats`).catch(() => null),
-        fetch(`${API_BASE_URL}/blogs/stats`).catch(() => null),
+        fetch(`${API_BASE_URL}/books/stats`, { headers: authHeader }).catch(() => null),
+        fetch(`${API_BASE_URL}/blogs/stats`, { headers: authHeader }).catch(() => null),
       ]);
+
 
       const newStats: DashboardStats = {
         books: { total: 0, published: 0, draft: 0, change: 0, trending: 'neutral' },
@@ -125,9 +130,14 @@ export default function AdminDashboard() {
 
   const fetchRecentContent = async () => {
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+
       const [blogsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/blogs?limit=3&sortBy=createdAt`).catch(() => null),
+        fetch(`${API_BASE_URL}/blogs?limit=3&sortBy=latest`, { headers: authHeader }).catch(() => null),
       ]);
+
 
       const recent: any[] = [];
 

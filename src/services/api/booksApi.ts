@@ -115,7 +115,10 @@ class BooksApiService {
     options: RequestInit = {}
   ): Promise<T> {
     try {
-      const defaultHeaders: Record<string, string> = {};
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      const defaultHeaders: Record<string, string> = {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
       
       // Only add Content-Type for non-FormData requests
       if (!(options.body instanceof FormData)) {
@@ -129,6 +132,7 @@ class BooksApiService {
         },
         ...options,
       });
+
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

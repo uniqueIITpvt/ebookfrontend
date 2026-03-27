@@ -62,7 +62,12 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/orders/all`);
+      const response = await fetch(`${API_URL}/orders/all`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
+        },
+      });
+
       const data = await response.json();
       if (data.success) {
         setOrders(data.data);
@@ -93,8 +98,12 @@ export default function OrdersPage() {
     if (!orderToDelete) return;
     try {
       const response = await fetch(`${API_URL}/orders/${orderToDelete}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
+        },
       });
+
       const data = await response.json();
       if (data.success) {
         setSnackbar({ open: true, message: 'Order deleted successfully', severity: 'success' });

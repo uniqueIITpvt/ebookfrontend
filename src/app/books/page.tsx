@@ -257,7 +257,8 @@ const BooksPage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 pt-20'>
+    <div className='min-h-screen bg-gray-50 pt-32 transition-all duration-300'>
+
       {/* Hero Section */}
       <BooksHero />
 

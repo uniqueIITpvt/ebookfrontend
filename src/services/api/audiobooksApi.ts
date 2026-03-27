@@ -5,7 +5,10 @@ const API_BASE_URL = API_CONFIG.API_BASE_URL;
 
 class AudiobooksApiService {
   private async fetchWithErrorHandling<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const defaultHeaders: Record<string, string> = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const defaultHeaders: Record<string, string> = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
 
     if (!(options.body instanceof FormData)) {
       defaultHeaders['Content-Type'] = 'application/json';
@@ -18,6 +21,7 @@ class AudiobooksApiService {
       },
       ...options,
     });
+
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
