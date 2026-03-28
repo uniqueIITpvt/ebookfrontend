@@ -35,10 +35,7 @@ class BookHubsApiService {
     options: RequestInit = {}
   ): Promise<T> {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-      const defaultHeaders: Record<string, string> = {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      };
+      const defaultHeaders: Record<string, string> = {};
       
       if (!(options.body instanceof FormData)) {
         defaultHeaders['Content-Type'] = 'application/json';
@@ -51,7 +48,6 @@ class BookHubsApiService {
         },
         ...options,
       });
-
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

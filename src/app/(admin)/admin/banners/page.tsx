@@ -212,11 +212,7 @@ export default function BannersPage() {
     try {
       const response = await fetch(`${API_URL}/banners/${bannerToDelete._id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
-        },
       });
-
 
       const data = await response.json();
 
@@ -239,11 +235,9 @@ export default function BannersPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
         },
         body: JSON.stringify({ isActive: !banner.isActive }),
       });
-
 
       const data = await response.json();
 

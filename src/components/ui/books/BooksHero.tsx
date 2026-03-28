@@ -22,35 +22,10 @@ export default function BooksHero({ className = '' }: BooksHeroProps) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [bannerEnabled, setBannerEnabled] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const fetchBannerSetting = async () => {
-      try {
-        const res = await fetch('/api/v1/settings/public');
-        const data = await res.json();
-
-        const value = data?.success ? data?.data?.banner_visual : undefined;
-        // Accept 1, '1', true, or 'true' as enabled
-        const enabled = value === 1 || value === true || value === '1' || value === 'true';
-        setBannerEnabled(enabled);
-
-        if (!enabled) {
-          setLoading(false);
-        }
-      } catch {
-        setBannerEnabled(false);
-        setLoading(false);
-      }
-    };
-
-    fetchBannerSetting();
-  }, []);
 
   // Fetch all banners
   const fetchBanners = useCallback(async () => {
     try {
-      if (bannerEnabled !== true) return;
       const res = await fetch(`${API_URL}/banners/position/any`);
       const data = await res.json();
       
@@ -62,13 +37,11 @@ export default function BooksHero({ className = '' }: BooksHeroProps) {
     } finally {
       setLoading(false);
     }
-  }, [bannerEnabled]);
+  }, []);
 
   useEffect(() => {
-    if (bannerEnabled === true) {
-      fetchBanners();
-    }
-  }, [bannerEnabled, fetchBanners]);
+    fetchBanners();
+  }, [fetchBanners]);
 
   // Auto-rotate every 5 seconds
   useEffect(() => {
@@ -83,12 +56,7 @@ export default function BooksHero({ className = '' }: BooksHeroProps) {
 
   const currentBanner = banners[currentSlide];
 
-  if (bannerEnabled === false || banners.length === 0) {
-    return null;
-  }
-
   return (
-
     <section className={`relative overflow-hidden w-full ${className}`}>
       {/* Responsive height classes with better mobile optimization */}
       <div className="

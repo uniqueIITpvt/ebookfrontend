@@ -19,12 +19,10 @@ class GstApiService {
   private API_BASE_URL = API_CONFIG.API_BASE_URL;
 
   private async fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const response = await fetch(`${this.API_BASE_URL}${url}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...options?.headers,
       },
     });

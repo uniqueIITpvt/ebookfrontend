@@ -162,31 +162,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleTogglePublic = async (setting: Setting) => {
-    try {
-
-      const response = await fetch(`${API_URL}/settings/${setting._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
-        },
-        body: JSON.stringify({ isPublic: !setting.isPublic }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchSettings();
-      } else {
-        setError(data.message || 'Failed to update setting visibility');
-      }
-    } catch (err) {
-      setError('Failed to update setting visibility');
-    }
-  };
-
   const handleDeleteClick = (setting: Setting) => {
-
     setSettingToDelete(setting);
     setDeleteDialogOpen(true);
   };
@@ -499,14 +475,8 @@ export default function AdminSettingsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Switch 
-                      checked={setting.isPublic} 
-                      size="small" 
-                      color="primary"
-                      onChange={() => handleTogglePublic(setting)}
-                    />
+                    <Switch checked={setting.isPublic} size="small" disabled />
                   </TableCell>
-
                   <TableCell>
                     <Typography
                       variant="body2"
@@ -589,10 +559,8 @@ export default function AdminSettingsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Switch
                 checked={formData.isPublic}
-                color="primary"
                 onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
               />
-
               <Typography variant="body2">Make this setting publicly accessible via API</Typography>
             </Box>
           </Box>

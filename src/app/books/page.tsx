@@ -151,31 +151,17 @@ const BooksPage = () => {
     }
 
     if (categoryParam) {
-      // Find the proper category name from the categories list to ensure matching
-      if (categories.length > 0) {
-        const matched = categories.find(c => 
-          c.name.toLowerCase() === categoryParam.toLowerCase() || 
-          c.slug === categoryParam.toLowerCase()
-        );
-        if (matched) {
-          setSelectedCategories([matched.name]);
-        } else {
-          setSelectedCategories([categoryParam]);
-        }
-      } else {
-        setSelectedCategories([categoryParam]);
-      }
+      setSelectedCategories([categoryParam]);
     }
 
     if (searchParam) {
       setSearchTerm(searchParam);
     }
-  }, [searchParams, categories]);
+  }, [searchParams]);
 
 
   const filteredItems = allBooks.filter(item => {
-    const matchesCategory = selectedCategories.length === 0 || 
-                           selectedCategories.some(sc => sc.toLowerCase() === item.category.toLowerCase());
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(item.category);
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -257,8 +243,7 @@ const BooksPage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 pt-32 transition-all duration-300'>
-
+    <div className='min-h-screen bg-gray-50 pt-20'>
       {/* Hero Section */}
       <BooksHero />
 
