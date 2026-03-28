@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { categoriesApi } from '@/services/api/categoriesApi';
 
 // Custom CSS for scrollbar hiding
 const customStyles = `
@@ -127,9 +128,30 @@ export default function SearchComponent({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [popularTopics, setPopularTopics] = useState<string[]>([]);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch popular topics (categories) from API
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingTopics(true);
+      categoriesApi.getForSelect()
+        .then(categories => {
+          // Get category names, limit to top 6
+          const topicNames = categories.slice(0, 6).map(cat => cat.label);
+          setPopularTopics(topicNames.length > 0 ? topicNames : ['Books', 'Summaries', 'Audiobooks']);
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          setPopularTopics(['Books', 'Summaries', 'Audiobooks']);
+        })
+        .finally(() => {
+          setIsLoadingTopics(false);
+        });
+    }
+  }, [isOpen]);
 
   // Handle search functionality
   useEffect(() => {
@@ -344,19 +366,28 @@ export default function SearchComponent({
                   <h3 className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3'>
                     Popular Topics
                   </h3>
-                  <div className='grid grid-cols-1 gap-2'>
-                    {['Anxiety Treatment', 'Depression Help', 'Stress Management', 'Couples Therapy'].map((topic) => (
-                      <button
-                        key={topic}
-                        onClick={() => handleSearch(topic)}
-                        className='flex items-center p-2 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors'
-                      >
-                        <FireIcon className='w-4 h-4 mr-2 text-orange-500 flex-shrink-0' />
-                        <span className='truncate'>{topic}</span>
-                      </button>
-                    ))}
-                  </div>
-
+                  {isLoadingTopics ? (
+                    <div className='flex items-center justify-center py-4'>
+                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600'></div>
+                      <span className='ml-2 text-xs text-slate-500'>Loading...</span>
+                    </div>
+                  ) : (
+                    <div className='grid grid-cols-1 gap-2'>
+                      {popularTopics.map((topic) => (
+                        <button
+                          key={topic}
+                          onClick={() => {
+                            window.location.href = `/books?category=${encodeURIComponent(topic)}`;
+                            onClose();
+                          }}
+                          className='flex items-center p-2 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors'
+                        >
+                          <FireIcon className='w-4 h-4 mr-2 text-orange-500 flex-shrink-0' />
+                          <span className='truncate'>{topic}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
