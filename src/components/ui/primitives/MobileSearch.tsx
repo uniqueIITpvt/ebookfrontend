@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { categoriesApi } from '@/services/api/categoriesApi';
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -15,7 +16,7 @@ import {
 import { Button } from './Button';
 import Image from 'next/image';
 
-// Type definitions for search results (reusing from main search component)
+// Type definitions for search results
 interface SearchResult {
   id: string;
   title: string;
@@ -29,9 +30,8 @@ interface SearchResult {
   url?: string;
 }
 
-// Sample search data (same as main component)
+// Sample search data
 const searchData: SearchResult[] = [
-  // Books
   {
     id: 'book-1',
     title: 'Public Speaking Mastery',
@@ -62,8 +62,6 @@ const searchData: SearchResult[] = [
     category: 'Psychology',
     url: '/books/modern-psychology',
   },
-
-  // Topics/Categories
   {
     id: 'topic-1',
     title: 'Anxiety Disorders',
@@ -115,13 +113,33 @@ export default function MobileSearch({
   const [selectedType, setSelectedType] = useState<string>('all');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [popularTopics, setPopularTopics] = useState<string[]>([]);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch popular topics (categories) from API
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingTopics(true);
+      categoriesApi.getForSelect()
+        .then(categories => {
+          const topicNames = categories.slice(0, 6).map(cat => cat.label);
+          setPopularTopics(topicNames.length > 0 ? topicNames : ['Books', 'Summaries', 'Audiobooks']);
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+          setPopularTopics(['Books', 'Summaries', 'Audiobooks']);
+        })
+        .finally(() => {
+          setIsLoadingTopics(false);
+        });
+    }
+  }, [isOpen]);
 
   // Handle search functionality
   useEffect(() => {
     if (searchTerm.trim()) {
       setIsLoading(true);
-      // Simulate API delay
       const timer = setTimeout(() => {
         const filtered = searchData.filter((item) => {
           const matchesSearch = 
@@ -148,7 +166,6 @@ export default function MobileSearch({
   useEffect(() => {
     if (isOpen) {
       setIsAnimating(true);
-      // Focus input after animation
       const timer = setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -167,6 +184,11 @@ export default function MobileSearch({
     if (term.trim() && !recentSearches.includes(term)) {
       setRecentSearches((prev) => [term, ...prev.slice(0, 4)]);
     }
+  };
+
+  const handleTopicClick = (topic: string) => {
+    window.location.href = `/books?category=${encodeURIComponent(topic)}`;
+    onClose();
   };
 
   const handleResultClick = (result: SearchResult) => {
@@ -318,18 +340,25 @@ export default function MobileSearch({
                   <h3 className='text-sm font-semibold text-slate-700 mb-3'>
                     Popular Topics
                   </h3>
-                  <div className='space-y-2'>
-                    {['Anxiety Treatment', 'Depression Help', 'Stress Management', 'Couples Therapy'].map((topic) => (
-                      <button
-                        key={topic}
-                        onClick={() => handleSearch(topic)}
-                        className='flex items-center w-full p-3 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100'
-                      >
-                        <FireIcon className='w-5 h-5 mr-3 text-orange-500 flex-shrink-0' />
-                        <span className='truncate'>{topic}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {isLoadingTopics ? (
+                    <div className='flex items-center justify-center py-4'>
+                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600'></div>
+                      <span className='ml-2 text-xs text-slate-500'>Loading...</span>
+                    </div>
+                  ) : (
+                    <div className='space-y-2'>
+                      {popularTopics.map((topic) => (
+                        <button
+                          key={topic}
+                          onClick={() => handleTopicClick(topic)}
+                          className='flex items-center w-full p-3 text-left text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100'
+                        >
+                          <FireIcon className='w-5 h-5 mr-3 text-orange-500 flex-shrink-0' />
+                          <span className='truncate'>{topic}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>

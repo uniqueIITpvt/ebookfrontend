@@ -156,7 +156,7 @@ function SectionCarousel({
           onClick={() => (window.location.href = seeMoreHref)}
           variant='outline'
           size='sm'
-          className='text-slate-600 border-slate-200 hover:border-indigo-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all text-xs font-dm-sans'
+          className='bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 hover:text-white transition-all text-xs font-dm-sans shadow-sm'
           rightIcon={<ChevronRightIcon className='w-3 h-3' />}
         >
           See More

@@ -18,9 +18,7 @@ export const API_CONFIG = {
   
   // Full API Base URL
   get API_BASE_URL() {
-    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-      return `/api/${this.VERSION}`;
-    }
+    // Always use the full backend URL directly - avoid proxy issues
     return `${this.BASE_URL}/api/${this.VERSION}`;
   },
   

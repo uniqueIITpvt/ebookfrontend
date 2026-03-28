@@ -276,7 +276,7 @@ export default function Hero() {
   };
 
   if (bannerEnabled === false || heroSlides.length === 0) {
-    return null;
+    return <div className="mt-20" />; // Spacer when banner is hidden
   }
 
   return (

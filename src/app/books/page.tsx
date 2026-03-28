@@ -159,6 +159,7 @@ const BooksPage = () => {
     }
   }, [searchParams]);
 
+
   const filteredItems = allBooks.filter(item => {
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(item.category);
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -169,6 +170,7 @@ const BooksPage = () => {
     
     return matchesCategory && matchesSearch && matchesFormat && matchesType;
   });
+
 
   useEffect(() => {
     setSelectedAudiobook((current) => {
