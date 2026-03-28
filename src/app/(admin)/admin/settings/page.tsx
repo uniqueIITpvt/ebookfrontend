@@ -212,6 +212,35 @@ export default function AdminSettingsPage() {
     return colors[category] || 'default';
   };
 
+  const handleTogglePublic = async (setting: Setting) => {
+    try {
+      const response = await fetch(`${API_URL}/settings/${setting._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
+        },
+        body: JSON.stringify({
+          key: setting.key,
+          value: setting.value,
+          category: setting.category,
+          description: setting.description,
+          isPublic: !setting.isPublic,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchSettings();
+      } else {
+        setError(data.message || 'Failed to update setting');
+      }
+    } catch (err) {
+      setError('Failed to update setting');
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -475,7 +504,12 @@ export default function AdminSettingsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Switch checked={setting.isPublic} size="small" disabled />
+                    <Switch 
+                      checked={setting.isPublic} 
+                      size="small" 
+                      color="success"
+                      onChange={() => handleTogglePublic(setting)}
+                    />
                   </TableCell>
                   <TableCell>
                     <Typography
