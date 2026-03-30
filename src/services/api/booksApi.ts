@@ -44,6 +44,7 @@ export interface Book {
   tags: string[];
   status: 'draft' | 'review' | 'published' | 'archived';
   gst?: number;
+  language?: string;
   slug?: string;
   views?: number;
   downloads?: number;
@@ -101,6 +102,7 @@ export interface BookPayload {
   publishDate: string;
   isbn?: string;
   gst?: number;
+  language?: string;
   format: string[];
   image?: string;
   featured: boolean;
@@ -435,6 +437,7 @@ class BooksApiService {
       bestseller: book.bestseller,
       tags: book.tags,
       status: book.status,
+      language: (book as any).language,
     };
   }
 

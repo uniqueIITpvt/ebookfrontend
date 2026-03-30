@@ -7,7 +7,7 @@ import {
   ChevronLeftIcon,
 } from '@heroicons/react/24/outline';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -176,13 +176,12 @@ function SectionCarousel({
       ) : (
         <div className='relative group/carousel px-1'>
           <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
+            modules={[Navigation, Pagination]}
             spaceBetween={20}
             slidesPerView={1}
             breakpoints={swiperBreakpoints}
             navigation={{ prevEl, nextEl }}
             pagination={{ clickable: true }}
-            autoplay={{ delay: 6000, disableOnInteraction: false }}
             className='!pb-12'
           >
             {items.map((book, index) => (
