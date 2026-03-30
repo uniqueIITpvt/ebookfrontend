@@ -225,12 +225,14 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                   </span>
                 </div>
 
-                {/* Type Badge */}
-                <div className='absolute top-2 right-2'>
-                  <span className='bg-white/90 backdrop-blur-sm text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold shadow-sm'>
-                    {item.type}
-                  </span>
-                </div>
+                {/* Language Badge */}
+                {(item as any).language && (
+                  <div className='absolute top-2 right-2'>
+                    <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                      {(item as any).language}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Hover Overlay - only for Reading Books (e-books and physical books) */}
@@ -342,12 +344,14 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                         </span>
                       </div>
 
-                      {/* Type Badge */}
-                      <div className='absolute top-2 right-2'>
-                        <span className='bg-white/90 backdrop-blur-sm text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold shadow-sm'>
-                          {item.type}
-                        </span>
-                      </div>
+                      {/* Language Badge */}
+                      {(item as any).language && (
+                        <div className='absolute top-2 right-2'>
+                          <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                            {(item as any).language}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Audio Play Button - for audiobooks */}
                       {item.type === 'Audiobook' && (

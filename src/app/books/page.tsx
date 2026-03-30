@@ -11,6 +11,7 @@ import BooksGrid from '@/components/ui/books/BooksGrid';
 import { API_CONFIG } from '@/config/api';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { categoriesApi } from '@/services/api/categoriesApi';
+import { languageApi, type LanguageRecord } from '@/services/api/languageApi';
 import type { Category } from '@/services/api/categoriesApi';
 
 const API_URL = API_CONFIG.API_BASE_URL;
@@ -66,9 +67,12 @@ const BooksPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedComponentType, setSelectedComponentType] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [languages, setLanguages] = useState<LanguageRecord[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,14 +139,27 @@ const BooksPage = () => {
       }
     };
 
+    const fetchLanguages = async () => {
+      try {
+        const res = await languageApi.getAllLanguages();
+        if (res.success && res.data) {
+          setLanguages(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching languages:', err);
+      }
+    };
+
     fetchBooks();
     fetchCategories();
+    fetchLanguages();
   }, []);
 
   useEffect(() => {
     const typeParam = searchParams.get('type');
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
+    const componentTypeParam = searchParams.get('componentType');
 
     if (typeParam === 'Audiobook') {
       setSelectedTypes(['Audiobook']);
@@ -157,6 +174,10 @@ const BooksPage = () => {
     if (searchParam) {
       setSearchTerm(searchParam);
     }
+
+    if (componentTypeParam) {
+      setSelectedComponentType(componentTypeParam);
+    }
   }, [searchParams]);
 
 
@@ -167,8 +188,10 @@ const BooksPage = () => {
                          item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFormat = selectedFormats.length === 0 || selectedFormats.some(format => item.format.includes(format));
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(item.type);
+    const matchesLanguage = selectedLanguages.length === 0 || selectedLanguages.includes((item as any).language);
+    const matchesComponentType = !selectedComponentType || (item as any).componentType === selectedComponentType;
     
-    return matchesCategory && matchesSearch && matchesFormat && matchesType;
+    return matchesCategory && matchesSearch && matchesFormat && matchesType && matchesLanguage && matchesComponentType;
   });
 
 
@@ -216,7 +239,9 @@ const BooksPage = () => {
     searchTerm !== '' || 
     selectedCategories.length > 0 || 
     selectedFormats.length > 0 || 
-    selectedTypes.length > 0;
+    selectedTypes.length > 0 ||
+    selectedLanguages.length > 0 ||
+    selectedComponentType !== null;
 
   // Show error state
   if (error && !isLoading) {
@@ -273,7 +298,10 @@ const BooksPage = () => {
               setSelectedFormats={setSelectedFormats}
               selectedTypes={selectedTypes}
               setSelectedTypes={setSelectedTypes}
+              selectedLanguages={selectedLanguages}
+              setSelectedLanguages={setSelectedLanguages}
               categories={categories.map(c => c.name)}
+              languages={languages.map(l => l.name)}
               formats={formats}
               resultsCount={filteredItems.length}
               isSidebarOpen={isSidebarOpen}

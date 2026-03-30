@@ -379,6 +379,15 @@ export default function MediaContentMobile() {
                         {book.category}
                       </span>
                     </div>
+
+                    {/* Language Badge */}
+                    {(book as any).language && (
+                      <div className='absolute top-2 right-2'>
+                        <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                          {(book as any).language}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Mobile Bottom Info */}
@@ -429,7 +438,7 @@ export default function MediaContentMobile() {
               <div className='h-1 w-20 bg-black rounded-full'></div>
             </div>
             <Button
-              onClick={() => window.location.href = '/free-summaries'}
+              onClick={() => window.location.href = '/books?componentType=free-summaries'}
               variant="outline"
               size="sm"
               rightIcon={<ChevronRightIcon className='w-4 h-4' />}
@@ -511,6 +520,15 @@ export default function MediaContentMobile() {
                         {summary.category}
                       </span>
                     </div>
+
+                    {/* Language Badge */}
+                    {(summary as any).language && (
+                      <div className='absolute top-2 right-2'>
+                        <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                          {(summary as any).language}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className='absolute bottom-0 left-0 right-0 z-[4] bg-gradient-to-t from-black/95 via-black/80 to-transparent rounded-b-[8px] p-2'>
@@ -559,7 +577,7 @@ export default function MediaContentMobile() {
               <div className='h-1 w-20 bg-black rounded-full'></div>
             </div>
             <Button
-              onClick={() => window.location.href = '/trending-books'}
+              onClick={() => window.location.href = '/books?componentType=trending-books'}
               variant="outline"
               size="sm"
               rightIcon={<ChevronRightIcon className='w-4 h-4' />}
@@ -641,6 +659,15 @@ export default function MediaContentMobile() {
                         {book.category}
                       </span>
                     </div>
+
+                    {/* Language Badge */}
+                    {(book as any).language && (
+                      <div className='absolute top-2 right-2'>
+                        <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                          {(book as any).language}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className='absolute bottom-0 left-0 right-0 z-[4] bg-gradient-to-t from-black/95 via-black/80 to-transparent rounded-b-[8px] p-2'>
@@ -689,7 +716,7 @@ export default function MediaContentMobile() {
               <div className='h-1 w-20 bg-black rounded-full'></div>
             </div>
             <Button
-              onClick={() => window.location.href = '/premium-summaries'}
+              onClick={() => window.location.href = '/books?componentType=premium-summaries'}
               variant="outline"
               size="sm"
               rightIcon={<ChevronRightIcon className='w-4 h-4' />}
@@ -771,6 +798,15 @@ export default function MediaContentMobile() {
                         {summary.category}
                       </span>
                     </div>
+
+                    {/* Language Badge */}
+                    {(summary as any).language && (
+                      <div className='absolute top-2 right-2'>
+                        <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                          {(summary as any).language}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className='absolute bottom-0 left-0 right-0 z-[4] bg-gradient-to-t from-black/95 via-black/80 to-transparent rounded-b-[8px] p-2'>

@@ -11,7 +11,7 @@ console.log(`[Next Config] Using ${USE_LOCAL_BACKEND ? 'LOCAL' : 'DEPLOYED'} bac
 
 const nextConfig: NextConfig = {
   images: {
-    qualities: [75, 100],
+    qualities: [75, 95, 100],
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {

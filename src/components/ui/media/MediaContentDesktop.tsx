@@ -91,6 +91,14 @@ function BookCard({ book, index, href, subLabel }: BookCardProps) {
               {book.category}
             </span>
           </div>
+
+          {(book as any).language && (
+            <div className='absolute top-2.5 right-2.5 z-10'>
+              <span className='bg-indigo-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest uppercase border border-white/10 shadow-premium font-dm-sans'>
+                {(book as any).language}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 z-[3] flex flex-col justify-end'>
@@ -258,10 +266,10 @@ export default function MediaContentDesktop() {
         <div className='max-w-7xl mx-auto px-8 relative z-10'>
           <SectionCarousel title='New Releases Books' seeMoreHref='/books' isLoading={isLoadingBooks} items={books} emptyMsg='No books available' sectionKey='books' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} />
           <div id="free-summaries-section">
-            <SectionCarousel title='Free Summaries' seeMoreHref='/free' isLoading={isLoadingFreeSummaries} items={freeSummaries} emptyMsg='No free summaries' sectionKey='free' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Free' />
+            <SectionCarousel title='Free Summaries' seeMoreHref='/books?componentType=free-summaries' isLoading={isLoadingFreeSummaries} items={freeSummaries} emptyMsg='No free summaries' sectionKey='free' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Free' />
           </div>
-          <SectionCarousel title='Trending Books' seeMoreHref='/trending' isLoading={isLoadingTrendingBooks} items={trendingBooks} emptyMsg='No trending books' sectionKey='trending' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Trending' />
-          <SectionCarousel title='Premium Content' seeMoreHref='/premium' isLoading={isLoadingPremiumSummaries} items={premiumSummaries} emptyMsg='No premium content' sectionKey='premium' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Premium' />
+          <SectionCarousel title='Trending Books' seeMoreHref='/books?componentType=trending-books' isLoading={isLoadingTrendingBooks} items={trendingBooks} emptyMsg='No trending books' sectionKey='trending' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Trending' />
+          <SectionCarousel title='Premium Content' seeMoreHref='/books?componentType=premium-summaries' isLoading={isLoadingPremiumSummaries} items={premiumSummaries} emptyMsg='No premium content' sectionKey='premium' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Premium' />
 
           <div className='relative mt-4 mb-4 p-8 lg:p-10 bg-[#0B0F1A] rounded-[40px] overflow-hidden border border-white/5'>
             <div className='absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none' />
