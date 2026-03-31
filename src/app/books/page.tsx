@@ -53,6 +53,8 @@ interface Book {
   bestseller: boolean;
   tags: string[];
   slug?: string;
+  language?: string;
+  componentType?: string;
   files?: {
     audiobook?: {
       url?: string;
@@ -156,10 +158,24 @@ const BooksPage = () => {
   }, []);
 
   useEffect(() => {
+    if (allBooks.length > 0) {
+      const allFormats = new Set<string>();
+      allBooks.forEach(book => {
+        if (book.format && Array.isArray(book.format)) {
+          book.format.forEach(f => allFormats.add(f));
+        }
+      });
+      setFormats(Array.from(allFormats).sort());
+    }
+  }, [allBooks]);
+
+  useEffect(() => {
     const typeParam = searchParams.get('type');
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
     const componentTypeParam = searchParams.get('componentType');
+    const languageParam = searchParams.get('language');
+    const formatParam = searchParams.get('format');
 
     if (typeParam === 'Audiobook') {
       setSelectedTypes(['Audiobook']);
@@ -178,7 +194,54 @@ const BooksPage = () => {
     if (componentTypeParam) {
       setSelectedComponentType(componentTypeParam);
     }
-  }, [searchParams]);
+
+    if (languageParam) {
+      setSelectedLanguages([languageParam]);
+    }
+
+    if (formatParam) {
+      setSelectedFormats([formatParam]);
+    }
+
+    // Smart Auto-Selection for Category Browsing
+    // If we have a category but no specific language/type/format filters in URL,
+    // we should auto-select all available ones for that category once books load.
+    if (categoryParam && !languageParam && !typeParam && !formatParam && allBooks.length > 0) {
+      const categoryBooks = allBooks.filter(b => b.category === categoryParam);
+      
+      const availableLangs = Array.from(new Set(categoryBooks.map(b => b.language).filter(Boolean))) as string[];
+      const availableTypes = Array.from(new Set(categoryBooks.map(b => b.type).filter(Boolean))) as ('Books' | 'Audiobook')[];
+      const availableFormats = new Set<string>();
+      categoryBooks.forEach(b => b.format?.forEach(f => availableFormats.add(f)));
+
+      if (availableLangs.length > 0) setSelectedLanguages(availableLangs);
+      if (availableTypes.length > 0) setSelectedTypes(availableTypes);
+      if (Array.from(availableFormats).length > 0) setSelectedFormats(Array.from(availableFormats));
+    }
+  }, [searchParams, allBooks.length]); // Added allBooks.length to re-run when books are loaded
+
+
+  // Update URL when filters change
+  useEffect(() => {
+    // Only update if we're not in the initial loading state
+    if (isLoading) return;
+
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (selectedCategories.length > 0) params.set('category', selectedCategories[0]);
+    if (selectedTypes.length > 0) params.set('type', selectedTypes[0]);
+    if (selectedLanguages.length > 0) params.set('language', selectedLanguages[0]);
+    if (selectedFormats.length > 0) params.set('format', selectedFormats[0]);
+    if (selectedComponentType) params.set('componentType', selectedComponentType);
+
+    const queryString = params.toString();
+    const newUrl = `/books${queryString ? `?${queryString}` : ''}`;
+    
+    // Only push if different to avoid redundant history entries
+    if (window.location.search !== `?${queryString}` && (window.location.search !== '' || queryString !== '')) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchTerm, selectedCategories, selectedTypes, selectedLanguages, selectedFormats, selectedComponentType, router, isLoading]);
 
 
   const filteredItems = allBooks.filter(item => {
@@ -188,8 +251,8 @@ const BooksPage = () => {
                          item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFormat = selectedFormats.length === 0 || selectedFormats.some(format => item.format.includes(format));
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(item.type);
-    const matchesLanguage = selectedLanguages.length === 0 || selectedLanguages.includes((item as any).language);
-    const matchesComponentType = !selectedComponentType || (item as any).componentType === selectedComponentType;
+    const matchesLanguage = selectedLanguages.length === 0 || (item.language && selectedLanguages.includes(item.language));
+    const matchesComponentType = !selectedComponentType || item.componentType === selectedComponentType;
     
     return matchesCategory && matchesSearch && matchesFormat && matchesType && matchesLanguage && matchesComponentType;
   });
@@ -276,13 +339,17 @@ const BooksPage = () => {
       <div className="max-w-[1600px] mx-auto">
         {/* Header with Back Button */}
         <div className="px-4 sm:px-6 lg:px-8 py-6">
-          <button
-            onClick={() => router.push('/')}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-            Back to Home
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => router.push('/')}
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeftIcon className="w-5 h-5" />
+              Back to Home
+            </button>
+            
+            
+          </div>
         </div>
 
         {/* Main Content with Sidebar Layout */}
@@ -293,13 +360,25 @@ const BooksPage = () => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               selectedCategories={selectedCategories}
-              setSelectedCategories={setSelectedCategories}
+              setSelectedCategories={(cats) => {
+                setSelectedCategories(cats);
+                if (searchTerm) setSearchTerm(''); // Clear search when browsing categories
+              }}
               selectedFormats={selectedFormats}
-              setSelectedFormats={setSelectedFormats}
+              setSelectedFormats={(fmts) => {
+                setSelectedFormats(fmts);
+                if (searchTerm) setSearchTerm(''); 
+              }}
               selectedTypes={selectedTypes}
-              setSelectedTypes={setSelectedTypes}
+              setSelectedTypes={(types) => {
+                setSelectedTypes(types);
+                if (searchTerm) setSearchTerm('');
+              }}
               selectedLanguages={selectedLanguages}
-              setSelectedLanguages={setSelectedLanguages}
+              setSelectedLanguages={(langs) => {
+                setSelectedLanguages(langs);
+                if (searchTerm) setSearchTerm('');
+              }}
               categories={categories.map(c => c.name)}
               languages={languages.map(l => l.name)}
               formats={formats}
@@ -311,6 +390,28 @@ const BooksPage = () => {
 
           {/* Main Content Area */}
           <div className="flex-1 min-w-0 lg:pt-0">
+            {/* Filter Result Summary Header */}
+            {hasActiveFilters && !selectedAudiobook && (
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {searchTerm ? `Searching for "${searchTerm}"` : 'Filtered Books'}
+                  <span className="text-gray-400 font-normal ml-2">({filteredItems.length})</span>
+                </h2>
+                <button 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategories([]);
+                    setSelectedLanguages([]);
+                    setSelectedFormats([]);
+                    setSelectedTypes([]);
+                  }}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-800"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+
             {selectedAudiobook && selectedAudiobook.type === 'Audiobook' ? (
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[#1f1f1f] text-white rounded-2xl overflow-hidden shadow-xl border border-black/10">
