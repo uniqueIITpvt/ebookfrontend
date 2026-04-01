@@ -390,28 +390,6 @@ const BooksPage = () => {
 
           {/* Main Content Area */}
           <div className="flex-1 min-w-0 lg:pt-0">
-            {/* Filter Result Summary Header */}
-            {hasActiveFilters && !selectedAudiobook && (
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {searchTerm ? `Searching for "${searchTerm}"` : 'Filtered Books'}
-                  <span className="text-gray-400 font-normal ml-2">({filteredItems.length})</span>
-                </h2>
-                <button 
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategories([]);
-                    setSelectedLanguages([]);
-                    setSelectedFormats([]);
-                    setSelectedTypes([]);
-                  }}
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-800"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            )}
-
             {selectedAudiobook && selectedAudiobook.type === 'Audiobook' ? (
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[#1f1f1f] text-white rounded-2xl overflow-hidden shadow-xl border border-black/10">

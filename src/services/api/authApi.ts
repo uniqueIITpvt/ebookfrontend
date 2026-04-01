@@ -24,6 +24,9 @@ export interface User {
   phone?: string;
   isEmailVerified: boolean;
   isActive: boolean;
+  subscriptionStatus?: 'none' | 'active' | 'inactive' | 'expired';
+  subscriptionPlan?: 'none' | 'basic' | 'premium' | 'pro';
+  subscriptionEndDate?: string;
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
@@ -349,6 +352,34 @@ class AuthApiService {
     } catch (error) {
       console.error('Refresh token error:', error);
       return { success: false };
+    }
+  }
+
+  /**
+   * Update subscription plan
+   */
+  async updateSubscription(plan: string, durationMonths: number = 1): Promise<{ success: boolean; data?: User; message?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/subscription`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ plan, durationMonths }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        this.setUser(data.data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Update subscription error:', error);
+      return {
+        success: false,
+        message: 'Failed to update subscription',
+      };
     }
   }
 }

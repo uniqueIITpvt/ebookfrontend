@@ -14,7 +14,7 @@ import 'swiper/css/pagination';
 import { Button } from '../primitives/Button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { generateBookSlug } from '@/utils/slugify';
+// import { generateBookSlug } from '@/utils/slugify';
 import { API_CONFIG } from '@/config/api';
 import { booksApi } from '@/services/api/booksApi';
 import type { Book } from '@/services/api/booksApi';
@@ -129,7 +129,9 @@ function BookCard({ book, index, href, subLabel }: BookCardProps) {
               <div className='text-[10px] text-white/40 font-medium bg-white/5 px-2 py-0.5 rounded-full'>{book.pages ? `${book.pages} pp` : book.type}</div>
             </div>
             <Link href={href} className='block'>
-              <button className='w-full py-3 bg-white text-black text-[12px] font-bold rounded-xl transition-all hover:bg-black hover:text-white active:scale-95 font-dm-sans shadow-lg'>
+              <button 
+                className='w-full py-3 bg-white text-black text-[12px] font-bold rounded-xl transition-all hover:bg-black hover:text-white active:scale-95 font-dm-sans shadow-lg'
+              >
                 Explore Now
               </button>
             </Link>

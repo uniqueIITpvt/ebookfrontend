@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/primitives/Button';
 import { generateBookSlug } from '@/utils/slugify';
+import { useRouter } from 'next/navigation';
 
 // Add the blob animation styles
 const blobStyles = `
@@ -68,6 +69,7 @@ interface BooksGridDesktopProps {
 }
 
 export default function BooksGridDesktop({ items, className = '', onAudiobookSelect }: BooksGridDesktopProps) {
+  const router = useRouter();
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -85,7 +87,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
   // Audio playback functionality
   const handlePlay = (item: Book) => {
     if (item.type !== 'Audiobook') return;
-    
+
     if (!audioRef.current) return;
 
     const audioUrl = item.files?.audiobook?.url || '/audio/audiobook-sample.mp3';
@@ -126,7 +128,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
     ));
   };
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className={`text-center py-16 ${className}`}>
         <p className='text-gray-600 font-medium'>No books found matching your criteria</p>
@@ -150,7 +152,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
     <div className={`${className}`}>
       {/* Hidden Audio Element */}
       <audio ref={audioRef} preload='metadata' />
-      
+
       {sortedCategories.map((category, catIndex) => (
         <div key={category} className={`${catIndex === 0 ? 'mb-12' : 'my-12'} last:mb-0`}>
           {/* Category Section Header - matching user request "dark text" */}
@@ -165,129 +167,10 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-8 gap-y-12'>
             {groupedItems[category].map((item, index) => (
               item.type === 'Books' ? (
-                <Link
-                  key={item.id}
-                  href={`/books/${generateBookSlug(item.title)}`}
-                  className='group relative w-full block'
-                  style={{ 
-                    animationDelay: `${index * 100}ms`,
-                    position: 'relative',
-                    height: '440px',
-                    borderRadius: '14px',
-                    zIndex: 10,
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
-                  }}
-                >
-            {/* Animated Blob Background */}
-            <div 
-              className="hidden absolute z-[1] top-1/2 left-1/2 w-[150px] h-[150px] rounded-full opacity-100 blur-[12px]"
-              style={{
-                backgroundColor: index % 3 === 0 ? '#4f46e5' : index % 3 === 1 ? '#7c3aed' : '#ec4899',
-                animation: 'blob-bounce 5s infinite ease',
-                transform: 'translate(-50%, -50%)',
-              }}
-            />
-
-            {/* Glass Background */}
-            <div 
-              className="absolute z-[2] bg-white/95 backdrop-blur-[24px] rounded-[10px] overflow-hidden"
-              style={{
-                top: '5px',
-                left: '5px',
-                width: 'calc(100% - 10px)',
-                height: 'calc(100% - 10px)',
-                outline: '2px solid white',
-              }}
-            >
-              {/* Cover Image */}
-              <div className='relative w-full h-full overflow-hidden flex items-center justify-center p-0'>
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  className='object-cover object-center transition-transform duration-300 group-hover:scale-105'
-                  sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
-                  loading={index < 4 ? "eager" : "lazy"}
-                  priority={index < 4}
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+E="
-                />
-                
-                {/* Category Badge */}
-                <div className='absolute top-2 left-2'>
-                  <span className='bg-white/90 backdrop-blur-sm text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold shadow-sm'>
-                    {item.category}
-                  </span>
-                </div>
-
-                {/* Language Badge */}
-                {(item as any).language && (
-                  <div className='absolute top-2 right-2'>
-                    <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
-                      {(item as any).language}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Hover Overlay - only for Reading Books (e-books and physical books) */}
-              {item.type === 'Books' && (
-                <div className='
-                  absolute inset-0 
-                  bg-gradient-to-t from-black/95 via-black/70 to-transparent 
-                  opacity-0 group-hover:opacity-100 
-                  transition-all duration-500 z-[3] rounded-[10px] 
-                  flex flex-col justify-end
-                '>
-                  <div className='
-                    p-4 text-white 
-                    transform translate-y-8 group-hover:translate-y-0 
-                    transition-transform duration-500
-                  '>
-                    <h3 className='text-lg font-bold mb-2 leading-tight'>
-                      {item.title}
-                    </h3>
-                    <p className='text-sm text-white/90 mb-3 leading-relaxed line-clamp-2'>
-                      {item.description}
-                    </p>
-                    <div className='text-xs text-white/80 mb-4'>
-                      <div className='font-medium'>{item.author}</div>
-                      <div>
-                        {item.pages ? `${item.pages} pages` : item.duration}
-                      </div>
-                      <div className='flex items-center mt-1'>
-                        {renderStars(item.rating)}
-                        <span className='ml-2 text-xs'>({item.reviews})</span>
-                      </div>
-                    </div>
-                    <div className='flex gap-2'>
-                      <Button variant="secondary" size="sm" fullWidth>
-                        Buy Now
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-                </Link>
-              ) : (
                 <div
                   key={item.id}
-                  role='button'
-                  tabIndex={0}
-                  onClick={() => onAudiobookSelect?.(item)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onAudiobookSelect?.(item);
-                    }
-                  }}
                   className='group relative w-full block cursor-pointer'
+                  onClick={() => router.push(`/books/${generateBookSlug(item.title)}`)}
                   style={{
                     animationDelay: `${index * 100}ms`,
                     position: 'relative',
@@ -303,7 +186,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                   }}
                 >
                   {/* Animated Blob Background */}
-                  <div 
+                  <div
                     className="hidden absolute z-[1] top-1/2 left-1/2 w-[150px] h-[150px] rounded-full opacity-100 blur-[12px]"
                     style={{
                       backgroundColor: index % 3 === 0 ? '#4f46e5' : index % 3 === 1 ? '#7c3aed' : '#ec4899',
@@ -313,7 +196,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                   />
 
                   {/* Glass Background */}
-                  <div 
+                  <div
                     className="absolute z-[2] bg-white/95 backdrop-blur-[24px] rounded-[10px] overflow-hidden"
                     style={{
                       top: '5px',
@@ -352,8 +235,139 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                           </span>
                         </div>
                       )}
+                    </div>
 
-                      {/* Audio Play Button - for audiobooks */}
+                    {/* Hover Overlay - only for Reading Books (e-books and physical books) */}
+                    {item.type === 'Books' && (
+                      <div className='
+                  absolute inset-0 
+                  bg-gradient-to-t from-black/95 via-black/70 to-transparent 
+                  opacity-0 group-hover:opacity-100 
+                  transition-all duration-500 z-[3] rounded-[10px] 
+                  flex flex-col justify-end
+                '>
+                        <div className='
+                    p-4 text-white 
+                    transform translate-y-8 group-hover:translate-y-0 
+                    transition-transform duration-500
+                  '>
+                          <h3 className='text-lg font-bold mb-2 leading-tight'>
+                            {item.title}
+                          </h3>
+                          <p className='text-sm text-white/90 mb-3 leading-relaxed line-clamp-2'>
+                            {item.description}
+                          </p>
+                          <div className='text-xs text-white/80 mb-4'>
+                            <div className='font-medium'>{item.author}</div>
+                            <div>
+                              {item.pages ? `${item.pages} pages` : item.duration}
+                            </div>
+                            <div className='flex items-center mt-1'>
+                              {renderStars(item.rating)}
+                              <span className='ml-2 text-xs'>({item.reviews})</span>
+                            </div>
+                          </div>
+                          <div className='flex gap-2'>
+                            <Link
+                              href={`/books/${generateBookSlug(item.title)}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1"
+                            >
+                              <Button variant="secondary" size="sm" className="w-full bg-white text-slate-900 border border-slate-200 hover:bg-slate-50">
+                                Choose Buy
+                              </Button>
+                            </Link>
+                            <Link
+                              href="/subscription"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1"
+                            >
+                              <Button variant="primary" size="sm" className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
+                                Choose Premium
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  key={item.id}
+                  role='button'
+                  tabIndex={0}
+                  onClick={() => onAudiobookSelect?.(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onAudiobookSelect?.(item);
+                    }
+                  }}
+                  className='group relative w-full block cursor-pointer'
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    position: 'relative',
+                    height: '440px',
+                    borderRadius: '14px',
+                    zIndex: 10,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
+                  }}
+                >
+                  {/* Animated Blob Background */}
+                  <div
+                    className="hidden absolute z-[1] top-1/2 left-1/2 w-[150px] h-[150px] rounded-full opacity-100 blur-[12px]"
+                    style={{
+                      backgroundColor: index % 3 === 0 ? '#4f46e5' : index % 3 === 1 ? '#7c3aed' : '#ec4899',
+                      animation: 'blob-bounce 5s infinite ease',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+
+                  {/* Glass Background */}
+                  <div
+                    className="absolute z-[2] bg-white/95 backdrop-blur-[24px] rounded-[10px] overflow-hidden"
+                    style={{
+                      top: '5px',
+                      left: '5px',
+                      width: 'calc(100% - 10px)',
+                      height: 'calc(100% - 10px)',
+                      outline: '2px solid white',
+                    }}
+                  >
+                    {/* Cover Image */}
+                    <div className='relative w-full h-full overflow-hidden flex items-center justify-center p-0'>
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className='object-cover object-center transition-transform duration-300 group-hover:scale-105'
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                        loading={index < 4 ? "eager" : "lazy"}
+                        priority={index < 4}
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+E="
+                      />
+
+                      <div className='absolute top-2 left-2'>
+                        <span className='bg-white/90 backdrop-blur-sm text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold shadow-sm'>
+                          {item.category}
+                        </span>
+                      </div>
+
+                      {(item as any).language && (
+                        <div className='absolute top-2 right-2'>
+                          <span className='bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase'>
+                            {(item as any).language}
+                          </span>
+                        </div>
+                      )}
+
                       {item.type === 'Audiobook' && (
                         <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[4]'>
                           <button
@@ -377,7 +391,6 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                       )}
                     </div>
 
-                    {/* Audiobook Info Overlay - Always visible for audiobooks */}
                     {item.type === 'Audiobook' && (
                       <div className='absolute bottom-0 left-0 right-0 z-[4] bg-gradient-to-t from-black/95 via-black/80 to-transparent rounded-b-[10px] p-3'>
                         <h3 className='text-sm font-bold text-white mb-1 leading-tight line-clamp-1'>
@@ -403,7 +416,6 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
         </div>
       ))}
 
-      {/* Audio Player Bar (appears when playing audiobooks) */}
       {currentlyPlaying && isPlaying && (
         <div className='
           fixed bottom-0 left-0 right-0 

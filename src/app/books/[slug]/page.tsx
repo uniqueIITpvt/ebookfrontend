@@ -20,6 +20,7 @@ import { generateBookSlug } from '@/utils/slugify';
 
 import { API_CONFIG } from '@/config/api';
 import { booksApi, type Book } from '@/services/api/booksApi';
+import { useAuth } from '@/contexts/AuthContext';
 
 const API_URL = API_CONFIG.API_BASE_URL;
 
@@ -41,6 +42,7 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState<number>(0);
   const [cartFeedback, setCartFeedback] = useState<string | null>(null);
+  const { user, setIsLoginModalOpen } = useAuth();
 
   // Unwrap params Promise
   const resolvedParams = use(params);
@@ -153,6 +155,14 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
 
     // Redirect to checkout with book ID and current quantity
     router.push(`/checkout?id=${bookId}&qty=${quantity}`);
+  };
+
+  const handleSubscribeClick = () => {
+    if (!user) {
+      setIsLoginModalOpen(true);
+    } else {
+      router.push('/subscription');
+    }
   };
 
   const handleRatingClick = async (newRating: number) => {
@@ -366,14 +376,14 @@ export default function BookSlugPage({ params }: BookSlugPageProps) {
               <div className="flex gap-4">
                 <button 
                   onClick={handleAddToCart}
-                  className="flex-1 bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-[15px] hover:bg-slate-800 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-xl shadow-slate-200 font-syne"
+                  className="flex-1 px-4 py-3 border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-50 transition-all font-syne flex items-center justify-center gap-2"
                 >
                   <ShoppingCartIcon className="w-5 h-5" />
-                  Add to Cart
+                  Cart
                 </button>
                 <button 
                   onClick={handleBuyNow}
-                  className="flex-1 px-8 py-4 border-2 border-slate-900 text-slate-900 rounded-2xl font-bold text-[15px] hover:bg-slate-50 transition-all active:scale-[0.98] font-syne"
+                  className="flex-1 px-4 py-3 border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-50 transition-all font-syne"
                 >
                   Buy Now
                 </button>

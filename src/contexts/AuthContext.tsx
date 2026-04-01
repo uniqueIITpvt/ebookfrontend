@@ -13,6 +13,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAdmin: boolean;
+  isLoginModalOpen: boolean;
+  setIsLoginModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const router = useRouter();
 
   // Initialize auth state from localStorage
@@ -123,6 +126,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     refreshUser,
     isAdmin: user?.role === 'admin' || user?.role === 'superadmin',
+    isLoginModalOpen,
+    setIsLoginModalOpen,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

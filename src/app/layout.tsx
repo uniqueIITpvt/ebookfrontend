@@ -63,6 +63,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import { AuthProvider } from '@/contexts/AuthContext';
+import AuthModal from '@/components/ui/auth/AuthModal';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -71,9 +74,12 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang='en' className={`${syne.variable} ${dmSans.variable}`}>
       <body suppressHydrationWarning className="font-sans">
-        <ConditionalLayout>
-          {children}
-        </ConditionalLayout>
+        <AuthProvider>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
+          <AuthModal />
+        </AuthProvider>
       </body>
     </html>
   );
