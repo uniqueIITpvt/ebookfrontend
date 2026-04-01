@@ -17,7 +17,10 @@ interface BooksSidebarProps {
   setSelectedFormats: (formats: string[]) => void;
   selectedTypes: string[];
   setSelectedTypes: (types: string[]) => void;
+  selectedLanguages: string[];
+  setSelectedLanguages: (languages: string[]) => void;
   categories: string[];
+  languages: string[];
   formats: string[];
   resultsCount: number;
   className?: string;
@@ -34,7 +37,10 @@ export default function BooksSidebar({
   setSelectedFormats,
   selectedTypes,
   setSelectedTypes,
+  selectedLanguages,
+  setSelectedLanguages,
   categories,
+  languages,
   formats,
   resultsCount,
   className = '',
@@ -47,13 +53,15 @@ export default function BooksSidebar({
     setSelectedCategories([]);
     setSelectedFormats([]);
     setSelectedTypes([]);
+    setSelectedLanguages([]);
   };
 
   const hasActiveFilters = 
     searchTerm !== '' || 
     selectedCategories.length > 0 || 
     selectedFormats.length > 0 || 
-    selectedTypes.length > 0;
+    selectedTypes.length > 0 ||
+    selectedLanguages.length > 0;
 
   const SidebarContent = () => (
     <div className="h-full lg:h-auto bg-white border-r lg:border border-gray-200 lg:rounded-xl lg:shadow-sm flex flex-col">
@@ -95,6 +103,31 @@ export default function BooksSidebar({
                 <XMarkIcon className="w-4 h-4" />
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Language */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Language</label>
+          <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+            {languages.map(language => (
+              <label key={language} className="flex items-center group cursor-pointer">
+                <input
+                  type="checkbox"
+                  value={language}
+                  checked={selectedLanguages.includes(language)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedLanguages([...selectedLanguages, language]);
+                    } else {
+                      setSelectedLanguages(selectedLanguages.filter(lang => lang !== language));
+                    }
+                  }}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                />
+                <span className="ml-2 text-sm text-gray-700 group-hover:text-blue-600 transition-colors">{language}</span>
+              </label>
+            ))}
           </div>
         </div>
 

@@ -44,6 +44,7 @@ export interface Book {
   tags: string[];
   status: 'draft' | 'review' | 'published' | 'archived';
   gst?: number;
+  language?: string;
   slug?: string;
   views?: number;
   downloads?: number;
@@ -101,6 +102,7 @@ export interface BookPayload {
   publishDate: string;
   isbn?: string;
   gst?: number;
+  language?: string;
   format: string[];
   image?: string;
   featured: boolean;
@@ -114,21 +116,27 @@ class BooksApiService {
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     try {
       const defaultHeaders: Record<string, string> = {};
-      
+
       // Only add Content-Type for non-FormData requests
       if (!(options.body instanceof FormData)) {
         defaultHeaders['Content-Type'] = 'application/json';
       }
-      
+
       const response = await fetch(`${API_BASE_URL}${url}`, {
         headers: {
           ...defaultHeaders,
           ...options.headers,
         },
+        signal: controller.signal,
         ...options,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -136,13 +144,17 @@ class BooksApiService {
           status: response.status,
           statusText: response.statusText,
           errorData,
-          url: `${API_BASE_URL}${url}`
+          url: `${API_BASE_URL}${url}`,
         });
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - server took too long to respond');
+      }
       console.error('API Error:', error);
       throw error;
     }
@@ -435,6 +447,7 @@ class BooksApiService {
       bestseller: book.bestseller,
       tags: book.tags,
       status: book.status,
+      language: (book as any).language,
     };
   }
 

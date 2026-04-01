@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -256,7 +256,7 @@ export default function Navbar() {
         ) : (
           <div className='relative books-swiper'>
             <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
+              modules={[Navigation, Pagination]}
               spaceBetween={20}
               slidesPerView={4}
               navigation={{
@@ -267,15 +267,6 @@ export default function Navbar() {
                 clickable: true,
                 el: '.books-swiper-pagination',
               }}
-              autoplay={
-                bookItems.length > 4
-                  ? {
-                      delay: 4000,
-                      disableOnInteraction: false,
-                    }
-                  : false
-              }
-              loop={bookItems.length > 4}
               className='px-8'
             >
               {bookItems.map((book: BookItem) => (

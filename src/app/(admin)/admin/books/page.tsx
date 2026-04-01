@@ -68,6 +68,7 @@ import { bookTypesApi, type BookType } from '@/services/api/bookTypesApi';
 import { bookHubsApi, type BookHub } from '@/services/api/bookHubsApi';
 import { bookStatusesApi, type BookStatus } from '@/services/api/bookStatusesApi';
 import { gstApi, type GstRecord } from '@/services/api/gstApi';
+import { languageApi, type LanguageRecord } from '@/services/api/languageApi';
 import { ImageIcon } from 'lucide-react';
 
 // Form data interface for admin operations
@@ -148,9 +149,12 @@ export default function BooksPage() {
   const [bookTypeDialogOpen, setBookTypeDialogOpen] = useState(false);
   const [bookHubDialogOpen, setBookHubDialogOpen] = useState(false);
   const [bookStatusDialogOpen, setBookStatusDialogOpen] = useState(false);
-const [gstDialogOpen, setGstDialogOpen] = useState(false);
-const [gstList, setGstList] = useState<GstRecord[]>([]);
-const [newGstData, setNewGstData] = useState({ percentage: 0 });
+  const [gstDialogOpen, setGstDialogOpen] = useState(false);
+  const [gstList, setGstList] = useState<GstRecord[]>([]);
+  const [newGstData, setNewGstData] = useState({ percentage: 0 });
+  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
+  const [languageList, setLanguageList] = useState<LanguageRecord[]>([]);
+  const [newLanguageData, setNewLanguageData] = useState({ name: '' });
   const [newCategoryData, setNewCategoryData] = useState({ name: '', description: '', color: '#1976d2' });
   const [newBookTypeData, setNewBookTypeData] = useState({ name: '', description: '', color: '#1976d2' });
   const [newBookHubData, setNewBookHubData] = useState({ name: '', value: '', description: '', color: '#9c27b0' });
@@ -297,6 +301,16 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
         }
       } catch (error) {
         console.warn('GST API not available');
+      }
+
+      // Try to load Languages
+      try {
+        const languageResponse = await languageApi.getAllLanguages();
+        if (languageResponse.success && languageResponse.data) {
+          setLanguageList(languageResponse.data);
+        }
+      } catch (error) {
+        console.warn('Language API not available');
       }
 
       // Try to load books
@@ -811,10 +825,10 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
         originalPrice: selectedBook.originalPrice,
         duration: selectedBook.duration,
         narrator: selectedBook.narrator,
-        // Only include image if no new image file is being uploaded
         image: imageFile ? undefined : (selectedBook.coverImage || selectedBook.image),
         subtitle: selectedBook.subtitle,
-        gst: selectedBook.gst
+        gst: selectedBook.gst,
+        language: selectedBook.language || 'English'
       };
       
       // Collect files for upload
@@ -1223,6 +1237,29 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
     } catch (error: any) {
       console.error('Error creating GST:', error);
       showErrorAlert('Failed to create GST', error.message || 'Please try again');
+    }
+  };
+
+  // Handler for creating new Language
+  const handleCreateLanguage = async () => {
+    if (!newLanguageData.name.trim()) {
+      showErrorAlert('Language name is required');
+      return;
+    }
+
+    try {
+      const response = await languageApi.createLanguage({ name: newLanguageData.name.trim(), isActive: true, sortOrder: 0 });
+
+      if (response.success) {
+        setLanguageList(prev => [...prev, response.data].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedBook({ ...selectedBook, language: response.data.name });
+        setNewLanguageData({ name: '' });
+        setLanguageDialogOpen(false);
+        showSuccessAlert(`Language "${response.data.name}" added successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error creating Language:', error);
+      showErrorAlert('Failed to create Language', error.message || 'Please try again');
     }
   };
 
@@ -1887,7 +1924,7 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
                 </Tooltip>
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Discount Price"
@@ -1907,7 +1944,7 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
                 required
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Original Price"
@@ -1921,6 +1958,42 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
                 InputProps={{ startAdornment: '$' }}
                 helperText="For discount calculations (optional)"
               />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel>Language</InputLabel>
+                  <Select
+                    value={(selectedBook as any)?.language || 'English'}
+                    label="Language"
+                    onChange={(e) => setSelectedBook({...selectedBook, language: e.target.value})}
+                    disabled={dialogMode === 'view'}
+                  >
+                    <MenuItem value=""><em>None</em></MenuItem>
+                    {languageList.map((lang) => (
+                      <MenuItem key={lang._id} value={lang.name}>
+                        {lang.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>Language of the book</FormHelperText>
+                </FormControl>
+                <Tooltip title="Add New Language">
+                  <IconButton
+                    onClick={() => setLanguageDialogOpen(true)}
+                    disabled={dialogMode === 'view'}
+                    sx={{
+                      mt: 1,
+                      bgcolor: 'purple',
+                      color: 'white',
+                      '&:hover': { bgcolor: '#6a0dad' },
+                      '&.Mui-disabled': { bgcolor: 'grey.300', color: 'grey.500' }
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
@@ -3473,6 +3546,42 @@ const [newGstData, setNewGstData] = useState({ percentage: 0 });
             disabled={newGstData.percentage < 0}
           >
             Add GST %
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Language Creation Dialog */}
+      <Dialog
+        open={languageDialogOpen}
+        onClose={() => setLanguageDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Add New Language</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Language Name"
+              value={newLanguageData.name}
+              onChange={(e) => setNewLanguageData({ name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+              autoFocus
+              placeholder="e.g. English, Hindi, French"
+            />
+            <Typography variant="caption" color="text.secondary">
+              This will create a new language that can be selected for books.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLanguageDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateLanguage}
+            variant="contained"
+            disabled={!newLanguageData.name.trim()}
+          >
+            Add Language
           </Button>
         </DialogActions>
       </Dialog>

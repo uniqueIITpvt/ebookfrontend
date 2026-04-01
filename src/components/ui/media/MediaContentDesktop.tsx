@@ -7,7 +7,7 @@ import {
   ChevronLeftIcon,
 } from '@heroicons/react/24/outline';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -30,6 +30,20 @@ const swiperBreakpoints = {
 
 const BLUR_DATA_URL =
   'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+E=';
+
+// Optimize Cloudinary image URLs for faster loading
+const getOptimizedImageUrl = (url: string, width: number = 400): string => {
+  if (!url) return '';
+  
+  // If it's a Cloudinary URL, add optimization parameters
+  if (url.includes('cloudinary.com')) {
+    // Insert transformation parameters before /upload/
+    return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto,c_fill/`);
+  }
+  
+  // For other URLs, return as-is (Next.js Image will handle optimization)
+  return url;
+};
 
 interface BookCardProps {
   book: Book;
@@ -70,15 +84,16 @@ function BookCard({ book, index, href, subLabel }: BookCardProps) {
         <div className='relative w-full h-full overflow-hidden flex items-center justify-center'>
           {book.image ? (
             <Image
-              src={book.image}
+              src={getOptimizedImageUrl(book.image, 400)}
               alt={book.title}
               fill
               className='object-cover object-center transition-transform duration-500 group-hover:scale-110'
               sizes='(max-width: 1280px) 25vw, 20vw'
-              loading={index < 5 ? 'eager' : 'lazy'}
-              priority={index < 5}
+              loading={index < 3 ? 'eager' : 'lazy'}
+              priority={index < 3}
               placeholder='blur'
               blurDataURL={BLUR_DATA_URL}
+              quality={75}
             />
           ) : (
             <div className='w-full h-full flex items-center justify-center bg-slate-50'>
@@ -91,6 +106,14 @@ function BookCard({ book, index, href, subLabel }: BookCardProps) {
               {book.category}
             </span>
           </div>
+
+          {(book as any).language && (
+            <div className='absolute top-2.5 right-2.5 z-10'>
+              <span className='bg-indigo-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest uppercase border border-white/10 shadow-premium font-dm-sans'>
+                {(book as any).language}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 z-[3] flex flex-col justify-end'>
@@ -176,13 +199,12 @@ function SectionCarousel({
       ) : (
         <div className='relative group/carousel px-1'>
           <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
+            modules={[Navigation, Pagination]}
             spaceBetween={20}
             slidesPerView={1}
             breakpoints={swiperBreakpoints}
             navigation={{ prevEl, nextEl }}
             pagination={{ clickable: true }}
-            autoplay={{ delay: 6000, disableOnInteraction: false }}
             className='!pb-12'
           >
             {items.map((book, index) => (
@@ -219,18 +241,40 @@ export default function MediaContentDesktop() {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
+        // Fetch all data in parallel with individual timeouts
+        const fetchWithTimeout = async (url: string, timeout = 30000) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => {
+            controller.abort();
+            console.warn(`Fetch timed out for: ${url}`);
+          }, timeout);
+          try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          } catch (err: any) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+              throw new Error('Server connection timeout. Please check if your backend and database are running.');
+            }
+            throw err;
+          }
+        };
+
+        // Use Promise.all with limited book fetches for faster loading
         const [booksRes, freeRes, trendingRes, premiumRes, catsRes] = await Promise.all([
-          fetch(`${API_URL}/books`).then(r => r.json()),
-          booksApi.getBooksByComponentType('free-summaries', 20),
-          booksApi.getBooksByComponentType('trending-books', 20),
-          booksApi.getBooksByComponentType('premium-summaries', 20),
+          fetchWithTimeout(`${API_URL}/books?limit=12`, 30000), // 30 second timeout
+          booksApi.getBooksByComponentType('free-summaries', 12),
+          booksApi.getBooksByComponentType('trending-books', 12),
+          booksApi.getBooksByComponentType('premium-summaries', 12),
           categoriesApi.getActive()
         ]);
 
         if (booksRes.success && booksRes.data) setBooks(booksRes.data);
-        setFreeSummaries(freeRes.data);
-        setTrendingBooks(trendingRes.data);
-        setPremiumSummaries(premiumRes.data);
+        setFreeSummaries(freeRes.data || []);
+        setTrendingBooks(trendingRes.data || []);
+        setPremiumSummaries(premiumRes.data || []);
         if (catsRes.success && catsRes.data) setCategories(catsRes.data);
 
       } catch (err) {
@@ -257,12 +301,47 @@ export default function MediaContentDesktop() {
         </div>
 
         <div className='max-w-7xl mx-auto px-8 relative z-10'>
-          <SectionCarousel title='New Releases Books' seeMoreHref='/books' isLoading={isLoadingBooks} items={books} emptyMsg='No books available' sectionKey='books' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} />
+          <SectionCarousel 
+            title='New Releases Books' 
+            seeMoreHref='/books' 
+            isLoading={isLoadingBooks} 
+            items={books} 
+            emptyMsg='No books available' 
+            sectionKey='books' 
+            cardHref={(b) => `/books?search=${encodeURIComponent(b.title)}&category=${encodeURIComponent(b.category)}&type=${encodeURIComponent(b.type)}&language=${encodeURIComponent((b as any).language || '')}&format=${encodeURIComponent(b.format?.[0] || '')}`} 
+          />
           <div id="free-summaries-section">
-            <SectionCarousel title='Free Summaries' seeMoreHref='/free' isLoading={isLoadingFreeSummaries} items={freeSummaries} emptyMsg='No free summaries' sectionKey='free' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Free' />
+            <SectionCarousel 
+              title='Free Summaries' 
+              seeMoreHref='/books?componentType=free-summaries' 
+              isLoading={isLoadingFreeSummaries} 
+              items={freeSummaries} 
+              emptyMsg='No free summaries' 
+              sectionKey='free' 
+              cardHref={(b) => `/books?search=${encodeURIComponent(b.title)}&category=${encodeURIComponent(b.category)}&type=${encodeURIComponent(b.type)}&language=${encodeURIComponent((b as any).language || '')}&format=${encodeURIComponent(b.format?.[0] || '')}`} 
+              subLabel='Free' 
+            />
           </div>
-          <SectionCarousel title='Trending Books' seeMoreHref='/trending' isLoading={isLoadingTrendingBooks} items={trendingBooks} emptyMsg='No trending books' sectionKey='trending' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Trending' />
-          <SectionCarousel title='Premium Content' seeMoreHref='/premium' isLoading={isLoadingPremiumSummaries} items={premiumSummaries} emptyMsg='No premium content' sectionKey='premium' cardHref={(b) => `/books/${generateBookSlug(b.title)}`} subLabel='Premium' />
+          <SectionCarousel 
+            title='Trending Books' 
+            seeMoreHref='/books?componentType=trending-books' 
+            isLoading={isLoadingTrendingBooks} 
+            items={trendingBooks} 
+            emptyMsg='No trending books' 
+            sectionKey='trending' 
+            cardHref={(b) => `/books?search=${encodeURIComponent(b.title)}&category=${encodeURIComponent(b.category)}&type=${encodeURIComponent(b.type)}&language=${encodeURIComponent((b as any).language || '')}&format=${encodeURIComponent(b.format?.[0] || '')}`} 
+            subLabel='Trending' 
+          />
+          <SectionCarousel 
+            title='Premium Content' 
+            seeMoreHref='/books?componentType=premium-summaries' 
+            isLoading={isLoadingPremiumSummaries} 
+            items={premiumSummaries} 
+            emptyMsg='No premium content' 
+            sectionKey='premium' 
+            cardHref={(b) => `/books?search=${encodeURIComponent(b.title)}&category=${encodeURIComponent(b.category)}&type=${encodeURIComponent(b.type)}&language=${encodeURIComponent((b as any).language || '')}&format=${encodeURIComponent(b.format?.[0] || '')}`} 
+            subLabel='Premium' 
+          />
 
           <div className='relative mt-4 mb-4 p-8 lg:p-10 bg-[#0B0F1A] rounded-[40px] overflow-hidden border border-white/5'>
             <div className='absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none' />

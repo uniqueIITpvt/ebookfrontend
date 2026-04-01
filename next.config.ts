@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Backend URL configuration
 // TOGGLE: Set to 'true' for local backend, 'false' for deployed backend
-const USE_LOCAL_BACKEND = false;
+const USE_LOCAL_BACKEND = true;
 const BACKEND_URL = USE_LOCAL_BACKEND
   ? 'http://localhost:5000'
   : (process.env.NEXT_PUBLIC_API_URL || 'https://ebookbackend.vercel.app');
@@ -11,7 +11,7 @@ console.log(`[Next Config] Using ${USE_LOCAL_BACKEND ? 'LOCAL' : 'DEPLOYED'} bac
 
 const nextConfig: NextConfig = {
   images: {
-    qualities: [75, 100],
+    qualities: [75, 95, 100],
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {

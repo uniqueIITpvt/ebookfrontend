@@ -51,11 +51,15 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'TechUniqueIIT - Ebook Store',
     description:
       'Your one-stop destination for ebooks, audiobooks, book summaries and learning resources',
-    icons: {
-      icon: siteLogo || '',
-      shortcut: siteLogo || '',
-      apple: siteLogo || '',
-    },
+    ...(siteLogo
+      ? {
+          icons: {
+            icon: siteLogo,
+            shortcut: siteLogo,
+            apple: siteLogo,
+          },
+        }
+      : {}),
   };
 }
 
