@@ -8,11 +8,13 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string }>;
+  login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string; user?: User }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
+  isUser: boolean;
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (open: boolean) => void;
 }
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.success && response.data) {
         setUser(response.data.user);
-        return { success: true, message: 'Login successful' };
+        return { success: true, message: 'Login successful', user: response.data.user };
       }
       
       return { success: false, message: response.message || 'Login failed' };
@@ -126,6 +128,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     refreshUser,
     isAdmin: user?.role === 'admin' || user?.role === 'superadmin',
+    isSuperAdmin: user?.role === 'superadmin',
+    isUser: user?.role === 'user',
     isLoginModalOpen,
     setIsLoginModalOpen,
   };

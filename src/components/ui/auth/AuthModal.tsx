@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/primitives/Button';
 import { useRouter } from 'next/navigation';
 
 export default function AuthModal() {
-  const { isLoginModalOpen, setIsLoginModalOpen, login } = useAuth();
+  const { isLoginModalOpen, setIsLoginModalOpen, login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,10 +23,16 @@ export default function AuthModal() {
 
     try {
       const res = await login({ email, password });
-      if (res.success) {
+      if (res.success && res.user) {
         setIsLoginModalOpen(false);
-        // After login, redirect to subscription if they don't have one
-        router.push('/subscription');
+        // Redirect based on role
+        const role = res.user.role;
+        if (role === 'admin' || role === 'superadmin') {
+          router.push('/admin/dashboard');
+        } else {
+          // Regular user - redirect to subscription or home
+          router.push('/subscription');
+        }
       } else {
         setError(res.message);
       }

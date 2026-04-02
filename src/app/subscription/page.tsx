@@ -51,11 +51,17 @@ const plans = [
 ];
 
 export default function SubscriptionPage() {
-  const { user, refreshUser } = useAuth();
+  const { user, isAuthenticated, refreshUser, setIsLoginModalOpen } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (planKey: string) => {
+    // If not logged in, open login modal
+    if (!isAuthenticated) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     try {
       setIsLoading(planKey);
       const durationMonths =
@@ -64,8 +70,7 @@ export default function SubscriptionPage() {
 
       if (res.success) {
         await refreshUser();
-        alert("Successfully subscribed!");
-        router.push("/");
+        // Subscription successful - button will automatically show "Current Plan"
       } else {
         alert(res.message || "Subscription failed");
       }

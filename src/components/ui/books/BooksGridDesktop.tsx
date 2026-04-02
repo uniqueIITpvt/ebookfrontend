@@ -274,7 +274,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                               className="flex-1"
                             >
                               <Button variant="secondary" size="sm" className="w-full bg-white text-slate-900 border border-slate-200 hover:bg-slate-50">
-                                Choose Buy
+                                Buy
                               </Button>
                             </Link>
                             <Link
@@ -283,7 +283,7 @@ export default function BooksGridDesktop({ items, className = '', onAudiobookSel
                               className="flex-1"
                             >
                               <Button variant="primary" size="sm" className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
-                                Choose Premium
+                                Subscribe
                               </Button>
                             </Link>
                           </div>

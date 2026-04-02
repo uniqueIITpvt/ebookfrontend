@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -27,8 +27,113 @@ import {
 import MobileNavigation from './MobileNavigation';
 import { SearchDropdown } from '../primitives/SearchComponent';
 import MobileSearch from '../primitives/MobileSearch';
+import { useAuth } from '@/contexts/AuthContext';
 
 const API_URL = API_CONFIG.API_BASE_URL;
+
+// Login Button Component
+function LoginButton() {
+  const { isAuthenticated, user, setIsLoginModalOpen, logout } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  if (isAuthenticated && user) {
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <span className="hidden md:inline">{user.name.split(' ')[0]}</span>
+        </button>
+
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+            <div className="px-4 py-2 border-b border-gray-100">
+              <p className="font-semibold text-gray-900">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.email}</p>
+              {user.subscriptionPlan && user.subscriptionPlan !== 'none' && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                  {user.subscriptionPlan.charAt(0).toUpperCase() + user.subscriptionPlan.slice(1)}
+                </span>
+              )}
+            </div>
+            <Link
+              href="/subscription"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={() => setShowDropdown(false)}
+            >
+              Subscription
+            </Link>
+            {user.role === 'user' ? (
+              <Link
+                href="/profile"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowDropdown(false)}
+              >
+                My Profile
+              </Link>
+            ) : (user.role === 'admin' || user.role === 'superadmin') && (
+              <Link
+                href="/admin/dashboard"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowDropdown(false)}
+              >
+                Admin Dashboard
+              </Link>
+            )}
+            <button
+              onClick={() => {
+                logout();
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-100"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/signup"
+        className="hidden sm:block px-4 py-2 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition-all duration-300"
+      >
+        Sign Up Free
+      </Link>
+      <button
+        onClick={() => setIsLoginModalOpen(true)}
+        className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+      >
+        Sign In
+      </button>
+    </div>
+  );
+}
 
 interface BookItem {
   id: number;
@@ -504,6 +609,9 @@ export default function Navbar() {
                   onClose={() => setSearchOpen(false)} 
                 />
               </div>
+
+              {/* Login/User Button */}
+              <LoginButton />
 
               <div className='lg:hidden'>
                 <button
