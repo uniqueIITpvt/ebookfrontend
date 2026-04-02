@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { CircularProgress, Box, Typography } from '@mui/material';
@@ -13,9 +13,20 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, isAdmin, user } = useAuth();
   const router = useRouter();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
+      // Add small delay to ensure user data is fully loaded
+      const timer = setTimeout(() => {
+        setIsReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (isReady && !isLoading) {
       if (!isAuthenticated) {
         // Not authenticated, redirect to login
         router.push('/admin/login');
@@ -24,10 +35,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
         router.push('/');
       }
     }
-  }, [isAuthenticated, isLoading, isAdmin, requireAdmin, router]);
+  }, [isAuthenticated, isLoading, isAdmin, requireAdmin, router, isReady]);
 
   // Show loading spinner while checking auth
-  if (isLoading) {
+  if (isLoading || !isReady) {
     return (
       <Box
         sx={{

@@ -99,12 +99,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authApi.logout();
       setUser(null);
-      router.push('/admin/login');
+      router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
       // Still clear local state even if API call fails
       setUser(null);
-      router.push('/admin/login');
+      router.push('/');
     }
   };
 

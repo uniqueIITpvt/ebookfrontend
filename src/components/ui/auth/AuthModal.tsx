@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { XMarkIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/primitives/Button';
@@ -124,7 +125,14 @@ export default function AuthModal() {
           </form>
 
           <p className='mt-8 text-center text-white/40 text-sm'>
-            Don't have an account? <span className='text-blue-500 font-bold cursor-pointer hover:underline'>Sign Up Free</span>
+            Don't have an account?{' '}
+            <Link 
+              href="/user/auth?mode=signup" 
+              onClick={() => setIsLoginModalOpen(false)}
+              className='text-blue-500 font-bold hover:underline'
+            >
+              Sign Up Free
+            </Link>
           </p>
         </div>
       </div>

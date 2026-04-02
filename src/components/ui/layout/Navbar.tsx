@@ -120,17 +120,17 @@ function LoginButton() {
   return (
     <div className="flex items-center gap-2">
       <Link
-        href="/signup"
+        href="/user/auth?mode=signup"
         className="hidden sm:block px-4 py-2 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition-all duration-300"
       >
         Sign Up Free
       </Link>
-      <button
-        onClick={() => setIsLoginModalOpen(true)}
+      <Link
+        href="/user/auth?mode=signin"
         className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
       >
         Sign In
-      </button>
+      </Link>
     </div>
   );
 }

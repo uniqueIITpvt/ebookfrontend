@@ -18,9 +18,10 @@ const NavbarLoading = () => (
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/admin');
+  const isAuthRoute = pathname?.startsWith('/user/login') || pathname?.startsWith('/user/signup') || pathname?.startsWith('/user/auth');
 
-  if (isAdminRoute) {
-    // For admin routes, don't show navbar, footer, or chat embed
+  if (isAdminRoute || isAuthRoute) {
+    // For admin and auth routes, don't show navbar, footer, or chat embed
     return <>{children}</>;
   }
 
